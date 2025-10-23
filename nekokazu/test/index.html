@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>掲示板アプリ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+        import { getDatabase, ref, push, onValue, serverTimestamp, query, orderByChild, limitToLast } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js';
+
+        let db;
+        let messagesRef;
+        let config;
+
+        // 初期化
+        async function init() {
+            try {
+                const response = await fetch('/api/config');
+                config = await response.json();
+
+                const app = initializeApp(config.firebaseConfig);
+                db = getDatabase(app);
+                messagesRef = ref(db, `${config.dbPath}/messages`);
+
+                // メッセージをリアルタイムで取得
+                const messagesQuery = query(messagesRef, orderByChild('timestamp'), limitToLast(50));
+                onValue(messagesQuery, (snapshot) => {
+                    displayMessages(snapshot);
+                });
+            } catch (error) {
+                console.error('初期化エラー:', error);
+                showError('初期化に失敗しました');
+            }
+        }
+
+        // メッセージ表示
+        function displayMessages(snapshot) {
+            const messagesContainer = document.getElementById('messages');
+            messagesContainer.innerHTML = '';
+
+            const messages = [];
+            snapshot.forEach((childSnapshot) => {
+                messages.push({
+                    id: childSnapshot.key,
+                    ...childSnapshot.val()
+                });
+            });
+
+            // 新しい順に表示
+            messages.reverse().forEach(msg => {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition';
+
+                const date = msg.timestamp ? new Date(msg.timestamp).toLocaleString('ja-JP') : '';
+
+                messageDiv.innerHTML = `
+                    <div class="flex items-start gap-3">
+                        <div class="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold">
+                            ${(msg.name || '匿名')[0]}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="font-semibold text-gray-900">${escapeHtml(msg.name || '匿名')}</span>
+                                <span class="text-xs text-gray-500">${date}</span>
+                            </div>
+                            <p class="text-gray-700 break-words whitespace-pre-wrap">${escapeHtml(msg.message)}</p>
+                        </div>
+                    </div>
+                `;
+
+                messagesContainer.appendChild(messageDiv);
+            });
+
+            if (messages.length === 0) {
+                messagesContainer.innerHTML = '<div class="text-center text-gray-500 py-8">まだ投稿がありません</div>';
+            }
+        }
+
+        // メッセージ送信
+        window.sendMessage = async function() {
+            const nameInput = document.getElementById('nameInput');
+            const messageInput = document.getElementById('messageInput');
+            const sendButton = document.getElementById('sendButton');
+
+            const name = nameInput.value.trim();
+            const message = messageInput.value.trim();
+
+            if (!message) {
+                showError('メッセージを入力してください');
+                return;
+            }
+
+            if (message.length > 500) {
+                showError('メッセージは500文字以内で入力してください');
+                return;
+            }
+
+            try {
+                sendButton.disabled = true;
+                sendButton.textContent = '送信中...';
+
+                await push(messagesRef, {
+                    name: name || '匿名',
+                    message: message,
+                    timestamp: serverTimestamp()
+                });
+
+                messageInput.value = '';
+                messageInput.style.height = 'auto';
+                showSuccess('投稿しました');
+            } catch (error) {
+                console.error('送信エラー:', error);
+                showError('送信に失敗しました');
+            } finally {
+                sendButton.disabled = false;
+                sendButton.textContent = '送信';
+            }
+        }
+
+        // エラー表示
+        function showError(message) {
+            showNotification(message, 'error');
+        }
+
+        // 成功表示
+        function showSuccess(message) {
+            showNotification(message, 'success');
+        }
+
+        // 通知表示
+        function showNotification(message, type) {
+            const notification = document.getElementById('notification');
+            const notificationText = document.getElementById('notificationText');
+
+            notificationText.textContent = message;
+            notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg text-white transform transition-all duration-300 ${
+                type === 'error' ? 'bg-red-500' : 'bg-green-500'
+            }`;
+            notification.classList.remove('translate-x-full', 'opacity-0');
+
+            setTimeout(() => {
+                notification.classList.add('translate-x-full', 'opacity-0');
+            }, 3000);
+        }
+
+        // HTMLエスケープ
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // テキストエリア自動リサイズ
+        window.autoResize = function(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = textarea.scrollHeight + 'px';
+        }
+
+        // Enterキーで送信
+        window.handleKeyPress = function(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+
+        // ページロード時に初期化
+        init();
+    </script>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-purple-50 min-h-screen">
+    <!-- 通知 -->
+    <div id="notification" class="fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg text-white transform translate-x-full opacity-0 transition-all duration-300 z-50">
+        <span id="notificationText"></span>
+    </div>
+
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <!-- ヘッダー -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">掲示板</h1>
+            <p class="text-gray-600">自由に投稿してください</p>
+        </div>
+
+        <!-- 投稿フォーム -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">新規投稿</h2>
+
+            <div class="mb-4">
+                <label for="nameInput" class="block text-sm font-medium text-gray-700 mb-2">
+                    名前（任意）
+                </label>
+                <input
+                    type="text"
+                    id="nameInput"
+                    placeholder="匿名"
+                    maxlength="20"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                />
+            </div>
+
+            <div class="mb-4">
+                <label for="messageInput" class="block text-sm font-medium text-gray-700 mb-2">
+                    メッセージ <span class="text-red-500">*</span>
+                </label>
+                <textarea
+                    id="messageInput"
+                    placeholder="メッセージを入力してください（500文字以内）"
+                    maxlength="500"
+                    rows="3"
+                    oninput="autoResize(this)"
+                    onkeypress="handleKeyPress(event)"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition resize-none"
+                ></textarea>
+                <p class="text-xs text-gray-500 mt-1">Shift+Enterで改行、Enterで送信</p>
+            </div>
+
+            <button
+                id="sendButton"
+                onclick="sendMessage()"
+                class="w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white font-semibold py-3 px-6 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all duration-200 shadow-md hover:shadow-lg"
+            >
+                送信
+            </button>
+        </div>
+
+        <!-- メッセージ一覧 -->
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">投稿一覧</h2>
+            <div id="messages" class="space-y-4">
+                <div class="text-center text-gray-500 py-8">読み込み中...</div>
+            </div>
+        </div>
+
+        <!-- フッター -->
+        <div class="text-center text-gray-600 mt-8 text-sm">
+            <p>掲示板アプリ - Firebase Realtime Database</p>
+        </div>
+    </div>
+</body>
+</html>
