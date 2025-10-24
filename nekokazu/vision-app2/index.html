@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>カメラAI - 画像分析チャット</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .camera-feed {
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            object-fit: cover;
+        }
+        .message-bubble {
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .loading-spinner {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- ヘッダー -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">📸 カメラAI</h1>
+            <p class="text-gray-600">カメラで撮った画像についてAIに質問しよう</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- 左側: カメラセクション -->
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">📷 カメラ</h2>
+
+                <!-- カメラフィード -->
+                <div class="mb-4">
+                    <video
+                        id="cameraFeed"
+                        class="camera-feed w-full bg-gray-900 rounded-lg"
+                        playsinline
+                        autoplay
+                        muted
+                    ></video>
+                </div>
+
+                <!-- カメラ制御 -->
+                <div class="space-y-3">
+                    <button
+                        id="startCameraBtn"
+                        class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg transition duration-200 flex items-center justify-center gap-2"
+                    >
+                        <span>▶</span> カメラを開始
+                    </button>
+                    <button
+                        id="captureBtn"
+                        class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg transition duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled
+                    >
+                        <span>📸</span> 撮影
+                    </button>
+                    <button
+                        id="stopCameraBtn"
+                        class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-4 rounded-lg transition duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled
+                    >
+                        <span>⏹</span> 停止
+                    </button>
+                </div>
+
+                <!-- 撮影済み画像プレビュー -->
+                <div class="mt-4">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-2">撮影済み画像</h3>
+                    <canvas
+                        id="previewCanvas"
+                        class="camera-feed w-full bg-gray-200 rounded-lg hidden"
+                    ></canvas>
+                    <div id="noImagePlaceholder" class="w-full bg-gray-200 rounded-lg h-32 flex items-center justify-center text-gray-500">
+                        まだ撮影されていません
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右側: チャットセクション -->
+            <div class="bg-white rounded-lg shadow-lg p-6 flex flex-col h-full" style="min-height: 500px;">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">💬 チャット</h2>
+
+                <!-- チャットメッセージ表示エリア -->
+                <div
+                    id="chatMessages"
+                    class="flex-1 overflow-y-auto mb-4 space-y-3 bg-gray-50 rounded-lg p-4"
+                    style="max-height: 400px;"
+                >
+                    <div class="text-center text-gray-500 text-sm mt-4">
+                        カメラで撮影してから質問してください
+                    </div>
+                </div>
+
+                <!-- 質問入力エリア -->
+                <div class="space-y-2">
+                    <input
+                        type="text"
+                        id="questionInput"
+                        placeholder="例: これは何ですか？この物体の用途は？"
+                        class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                        disabled
+                    >
+                    <button
+                        id="askBtn"
+                        class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        disabled
+                    >
+                        <span>✉️</span> 質問する
+                    </button>
+                </div>
+
+                <!-- 状態表示 -->
+                <div id="statusMessage" class="mt-3 text-sm text-gray-600 text-center hidden">
+                    <span class="loading-spinner inline-block mr-2">⏳</span>
+                    <span id="statusText"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- エラーメッセージ -->
+        <div id="errorAlert" class="fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg hidden max-w-md">
+            <button class="absolute top-2 right-2 text-xl" onclick="this.parentElement.classList.add('hidden')">×</button>
+            <p id="errorMessage"></p>
+        </div>
+
+        <!-- 成功メッセージ -->
+        <div id="successAlert" class="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg hidden max-w-md">
+            <button class="absolute top-2 right-2 text-xl" onclick="this.parentElement.classList.add('hidden')">×</button>
+            <p id="successMessage"></p>
+        </div>
+    </div>
+
+    <script>
+        // グローバル状態
+        let stream = null;
+        let capturedImageData = null;
+        let mediaRecorder = null;
+
+        // DOM要素
+        const cameraFeed = document.getElementById('cameraFeed');
+        const previewCanvas = document.getElementById('previewCanvas');
+        const noImagePlaceholder = document.getElementById('noImagePlaceholder');
+        const startCameraBtn = document.getElementById('startCameraBtn');
+        const captureBtn = document.getElementById('captureBtn');
+        const stopCameraBtn = document.getElementById('stopCameraBtn');
+        const askBtn = document.getElementById('askBtn');
+        const questionInput = document.getElementById('questionInput');
+        const chatMessages = document.getElementById('chatMessages');
+        const statusMessage = document.getElementById('statusMessage');
+        const statusText = document.getElementById('statusText');
+        const errorAlert = document.getElementById('errorAlert');
+        const errorMessage = document.getElementById('errorMessage');
+        const successAlert = document.getElementById('successAlert');
+        const successMessage = document.getElementById('successMessage');
+
+        // ユーティリティ関数
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorAlert.classList.remove('hidden');
+            setTimeout(() => errorAlert.classList.add('hidden'), 5000);
+        }
+
+        function showSuccess(message) {
+            successMessage.textContent = message;
+            successAlert.classList.remove('hidden');
+            setTimeout(() => successAlert.classList.add('hidden'), 5000);
+        }
+
+        function setStatus(message) {
+            statusText.textContent = message;
+            statusMessage.classList.remove('hidden');
+        }
+
+        function clearStatus() {
+            statusMessage.classList.add('hidden');
+        }
+
+        function addMessage(role, content) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message-bubble';
+
+            if (role === 'user') {
+                messageDiv.innerHTML = `
+                    <div class="bg-blue-500 text-white rounded-lg px-4 py-2 ml-8 break-words">
+                        ${escapeHtml(content)}
+                    </div>
+                `;
+            } else {
+                messageDiv.innerHTML = `
+                    <div class="bg-gray-200 text-gray-800 rounded-lg px-4 py-2 mr-8 break-words">
+                        ${escapeHtml(content)}
+                    </div>
+                `;
+            }
+
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // カメラ制御
+        startCameraBtn.addEventListener('click', async () => {
+            try {
+                setStatus('カメラを起動中...');
+
+                const constraints = {
+                    video: {
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 },
+                        facingMode: 'environment'
+                    }
+                };
+
+                stream = await navigator.mediaDevices.getUserMedia(constraints);
+                cameraFeed.srcObject = stream;
+
+                startCameraBtn.disabled = true;
+                captureBtn.disabled = false;
+                stopCameraBtn.disabled = false;
+
+                clearStatus();
+                showSuccess('カメラが起動しました');
+            } catch (err) {
+                showError('カメラへのアクセスに失敗しました: ' + err.message);
+                clearStatus();
+            }
+        });
+
+        captureBtn.addEventListener('click', () => {
+            try {
+                const ctx = previewCanvas.getContext('2d');
+                previewCanvas.width = cameraFeed.videoWidth;
+                previewCanvas.height = cameraFeed.videoHeight;
+                ctx.drawImage(cameraFeed, 0, 0);
+
+                capturedImageData = previewCanvas.toDataURL('image/jpeg', 0.9);
+
+                previewCanvas.classList.remove('hidden');
+                noImagePlaceholder.classList.add('hidden');
+
+                askBtn.disabled = false;
+                questionInput.disabled = false;
+
+                showSuccess('撮影完了！質問を入力してください');
+            } catch (err) {
+                showError('撮影に失敗しました: ' + err.message);
+            }
+        });
+
+        stopCameraBtn.addEventListener('click', () => {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+
+            cameraFeed.srcObject = null;
+            startCameraBtn.disabled = false;
+            captureBtn.disabled = true;
+            stopCameraBtn.disabled = true;
+
+            showSuccess('カメラを停止しました');
+        });
+
+        // チャット機能
+        askBtn.addEventListener('click', sendQuestion);
+        questionInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !askBtn.disabled) {
+                sendQuestion();
+            }
+        });
+
+        async function sendQuestion() {
+            const question = questionInput.value.trim();
+
+            if (!question) {
+                showError('質問を入力してください');
+                return;
+            }
+
+            if (!capturedImageData) {
+                showError('まず画像を撮影してください');
+                return;
+            }
+
+            try {
+                askBtn.disabled = true;
+                questionInput.disabled = true;
+                setStatus('AIが分析中...');
+
+                // ユーザーのメッセージを表示
+                addMessage('user', question);
+
+                // API呼び出し
+                const response = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        image: capturedImageData,
+                        question: question
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'API呼び出しに失敗しました');
+                }
+
+                const result = await response.json();
+
+                if (result.success) {
+                    addMessage('assistant', result.result);
+                    questionInput.value = '';
+                    clearStatus();
+                    showSuccess('分析完了！');
+                } else {
+                    throw new Error(result.error || '分析に失敗しました');
+                }
+            } catch (err) {
+                addMessage('assistant', '❌ エラーが発生しました: ' + err.message);
+                showError('エラー: ' + err.message);
+            } finally {
+                askBtn.disabled = false;
+                questionInput.disabled = false;
+                clearStatus();
+            }
+        }
+
+        // 初期状態を設定
+        captureBtn.disabled = true;
+        stopCameraBtn.disabled = true;
+        askBtn.disabled = true;
+        questionInput.disabled = true;
+
+        // ページロード時にチャットメッセージをクリア
+        chatMessages.innerHTML = '<div class="text-center text-gray-500 text-sm mt-4">カメラで撮影してから質問してください</div>';
+    </script>
+</body>
+</html>
