@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>カメラ画像質問アプリ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-indigo-900 mb-2">📷 AI画像質問アプリ</h1>
+            <p class="text-gray-600">カメラで撮影して、写っているものについて質問してみよう！</p>
+        </div>
+
+        <!-- Main Card -->
+        <div class="bg-white rounded-2xl shadow-2xl p-6 md:p-8">
+            <!-- Camera Section -->
+            <div class="mb-6">
+                <div class="relative bg-gray-900 rounded-xl overflow-hidden aspect-video">
+                    <video id="video" class="w-full h-full object-cover" autoplay playsinline></video>
+                    <canvas id="canvas" class="hidden"></canvas>
+                    <img id="capturedImage" class="hidden w-full h-full object-contain" />
+                </div>
+
+                <!-- Camera Controls -->
+                <div class="flex gap-3 mt-4 justify-center">
+                    <button id="startCamera" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-lg shadow-lg transition duration-200 transform hover:scale-105">
+                        🎥 カメラ起動
+                    </button>
+                    <button id="captureBtn" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg shadow-lg transition duration-200 transform hover:scale-105 hidden">
+                        📸 撮影
+                    </button>
+                    <button id="retakeBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg shadow-lg transition duration-200 transform hover:scale-105 hidden">
+                        🔄 撮り直し
+                    </button>
+                </div>
+            </div>
+
+            <!-- Question Input Section -->
+            <div id="questionSection" class="hidden">
+                <div class="mb-4">
+                    <label for="questionInput" class="block text-gray-700 font-semibold mb-2">
+                        この画像について質問してください
+                    </label>
+                    <textarea
+                        id="questionInput"
+                        rows="3"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
+                        placeholder="例: この画像に何が写っていますか？"
+                    ></textarea>
+                </div>
+
+                <button id="analyzeBtn" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-4 px-6 rounded-lg shadow-lg transition duration-200 transform hover:scale-105">
+                    🤖 AIに質問する
+                </button>
+            </div>
+
+            <!-- Loading Indicator -->
+            <div id="loading" class="hidden text-center py-8">
+                <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+                <p class="mt-4 text-gray-600">AIが画像を分析中...</p>
+            </div>
+
+            <!-- Answer Section -->
+            <div id="answerSection" class="hidden mt-6">
+                <div class="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-6 border border-indigo-200">
+                    <h3 class="text-xl font-bold text-indigo-900 mb-3">🎯 AIの回答</h3>
+                    <div id="answerText" class="text-gray-800 whitespace-pre-wrap leading-relaxed"></div>
+                </div>
+
+                <button id="askAgainBtn" class="w-full mt-4 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-lg shadow-lg transition duration-200">
+                    💬 別の質問をする
+                </button>
+            </div>
+
+            <!-- Error Message -->
+            <div id="errorMessage" class="hidden mt-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg"></div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center mt-8 text-gray-600 text-sm">
+            <p>Powered by OpenAI GPT-4o Vision</p>
+        </div>
+    </div>
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const capturedImage = document.getElementById('capturedImage');
+        const startCameraBtn = document.getElementById('startCamera');
+        const captureBtn = document.getElementById('captureBtn');
+        const retakeBtn = document.getElementById('retakeBtn');
+        const questionSection = document.getElementById('questionSection');
+        const questionInput = document.getElementById('questionInput');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const loading = document.getElementById('loading');
+        const answerSection = document.getElementById('answerSection');
+        const answerText = document.getElementById('answerText');
+        const askAgainBtn = document.getElementById('askAgainBtn');
+        const errorMessage = document.getElementById('errorMessage');
+
+        let stream = null;
+        let imageData = null;
+
+        // Start Camera
+        startCameraBtn.addEventListener('click', async () => {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment' }
+                });
+                video.srcObject = stream;
+                video.classList.remove('hidden');
+                capturedImage.classList.add('hidden');
+                startCameraBtn.classList.add('hidden');
+                captureBtn.classList.remove('hidden');
+                questionSection.classList.add('hidden');
+                answerSection.classList.add('hidden');
+                hideError();
+            } catch (error) {
+                showError('カメラへのアクセスが拒否されました。ブラウザの設定を確認してください。');
+            }
+        });
+
+        // Capture Image
+        captureBtn.addEventListener('click', () => {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0);
+
+            imageData = canvas.toDataURL('image/jpeg', 0.8);
+            capturedImage.src = imageData;
+
+            video.classList.add('hidden');
+            capturedImage.classList.remove('hidden');
+            captureBtn.classList.add('hidden');
+            retakeBtn.classList.remove('hidden');
+            questionSection.classList.remove('hidden');
+
+            // Stop camera stream
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+
+            hideError();
+        });
+
+        // Retake Image
+        retakeBtn.addEventListener('click', async () => {
+            stream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: 'environment' }
+            });
+            video.srcObject = stream;
+            video.classList.remove('hidden');
+            capturedImage.classList.add('hidden');
+            captureBtn.classList.remove('hidden');
+            retakeBtn.classList.add('hidden');
+            questionSection.classList.add('hidden');
+            answerSection.classList.add('hidden');
+            questionInput.value = '';
+            hideError();
+        });
+
+        // Analyze Image
+        analyzeBtn.addEventListener('click', async () => {
+            const question = questionInput.value.trim();
+
+            if (!question) {
+                showError('質問を入力してください。');
+                return;
+            }
+
+            if (!imageData) {
+                showError('画像を撮影してください。');
+                return;
+            }
+
+            loading.classList.remove('hidden');
+            questionSection.classList.add('hidden');
+            answerSection.classList.add('hidden');
+            hideError();
+
+            try {
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        image: imageData,
+                        question: question
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    answerText.textContent = data.answer;
+                    answerSection.classList.remove('hidden');
+                } else {
+                    showError(data.error || '画像の分析中にエラーが発生しました。');
+                }
+            } catch (error) {
+                showError('サーバーとの通信中にエラーが発生しました。');
+                console.error(error);
+            } finally {
+                loading.classList.add('hidden');
+            }
+        });
+
+        // Ask Again
+        askAgainBtn.addEventListener('click', () => {
+            answerSection.classList.add('hidden');
+            questionSection.classList.remove('hidden');
+            questionInput.value = '';
+            questionInput.focus();
+        });
+
+        // Helper Functions
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.remove('hidden');
+        }
+
+        function hideError() {
+            errorMessage.classList.add('hidden');
+        }
+
+        // Allow Enter key to submit (with Shift+Enter for new line)
+        questionInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                analyzeBtn.click();
+            }
+        });
+    </script>
+</body>
+</html>
