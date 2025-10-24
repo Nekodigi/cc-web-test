@@ -1,15 +1,11 @@
 import os
 import base64
 import json
-from io import BytesIO
-from flask import Flask, request, jsonify
+import functions_framework
+from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
-from dotenv import load_dotenv
 from openai import OpenAI
 import logging
-
-# Load environment variables
-load_dotenv()
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -29,13 +25,13 @@ else:
 
 
 def analyze_image_with_context(base64_image: str, question: str) -> str:
-    """Analyze image using GPT-4 Vision and answer the question"""
+    """Analyze image using GPT-4o Vision and answer the question"""
     if not client:
         return "Error: OpenAI API key not configured"
-    
+
     try:
         response = client.chat.completions.create(
-            model="gpt-4-vision-preview",
+            model="gpt-4o-mini",
             messages=[
                 {
                     "role": "user",
@@ -43,7 +39,8 @@ def analyze_image_with_context(base64_image: str, question: str) -> str:
                         {
                             "type": "image_url",
                             "image_url": {
-                                "url": f"data:image/jpeg;base64,{base64_image}"
+                                "url": f"data:image/jpeg;base64,{base64_image}",
+                                "detail": "high"
                             }
                         },
                         {
@@ -53,7 +50,7 @@ def analyze_image_with_context(base64_image: str, question: str) -> str:
                     ]
                 }
             ],
-            max_tokens=1024
+            max_tokens=2000
         )
         return response.choices[0].message.content
     except Exception as e:
@@ -104,6 +101,17 @@ def index():
             return f.read()
     except FileNotFoundError:
         return "index.html not found", 404
+
+
+@functions_framework.http
+def main(request):
+    """Cloud Functions entry point"""
+    with app.request_context(request.environ):
+        try:
+            return app.full_dispatch_request()
+        except Exception as e:
+            logger.error(f"Error in request handling: {str(e)}")
+            return jsonify({'error': str(e)}), 500
 
 
 if __name__ == '__main__':
