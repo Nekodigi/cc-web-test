@@ -3,365 +3,266 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>カメラAI - 画像分析チャット</title>
+    <title>Camera AI Analyzer</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        .camera-feed {
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            object-fit: cover;
-        }
-        .message-bubble {
-            animation: slideIn 0.3s ease-out;
-        }
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
+        @keyframes pulse-ring {
+            0% {
+                box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
             }
-            to {
-                opacity: 1;
-                transform: translateY(0);
+            70% {
+                box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
             }
         }
-        .loading-spinner {
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
+        .animate-pulse-ring {
+            animation: pulse-ring 2s infinite;
         }
     </style>
 </head>
-<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
-    <div class="container mx-auto px-4 py-8">
-        <!-- ヘッダー -->
-        <div class="text-center mb-8">
-            <h1 class="text-4xl font-bold text-gray-800 mb-2">📸 カメラAI</h1>
-            <p class="text-gray-600">カメラで撮った画像についてAIに質問しよう</p>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <!-- 左側: カメラセクション -->
-            <div class="bg-white rounded-lg shadow-lg p-6">
-                <h2 class="text-2xl font-bold text-gray-800 mb-4">📷 カメラ</h2>
-
-                <!-- カメラフィード -->
-                <div class="mb-4">
-                    <video
-                        id="cameraFeed"
-                        class="camera-feed w-full bg-gray-900 rounded-lg"
-                        playsinline
-                        autoplay
-                        muted
-                    ></video>
-                </div>
-
-                <!-- カメラ制御 -->
-                <div class="space-y-3">
-                    <button
-                        id="startCameraBtn"
-                        class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg transition duration-200 flex items-center justify-center gap-2"
-                    >
-                        <span>▶</span> カメラを開始
-                    </button>
-                    <button
-                        id="captureBtn"
-                        class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg transition duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                        disabled
-                    >
-                        <span>📸</span> 撮影
-                    </button>
-                    <button
-                        id="stopCameraBtn"
-                        class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-4 rounded-lg transition duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                        disabled
-                    >
-                        <span>⏹</span> 停止
-                    </button>
-                </div>
-
-                <!-- 撮影済み画像プレビュー -->
-                <div class="mt-4">
-                    <h3 class="text-lg font-semibold text-gray-700 mb-2">撮影済み画像</h3>
-                    <canvas
-                        id="previewCanvas"
-                        class="camera-feed w-full bg-gray-200 rounded-lg hidden"
-                    ></canvas>
-                    <div id="noImagePlaceholder" class="w-full bg-gray-200 rounded-lg h-32 flex items-center justify-center text-gray-500">
-                        まだ撮影されていません
-                    </div>
-                </div>
-            </div>
-
-            <!-- 右側: チャットセクション -->
-            <div class="bg-white rounded-lg shadow-lg p-6 flex flex-col h-full" style="min-height: 500px;">
-                <h2 class="text-2xl font-bold text-gray-800 mb-4">💬 チャット</h2>
-
-                <!-- チャットメッセージ表示エリア -->
-                <div
-                    id="chatMessages"
-                    class="flex-1 overflow-y-auto mb-4 space-y-3 bg-gray-50 rounded-lg p-4"
-                    style="max-height: 400px;"
-                >
-                    <div class="text-center text-gray-500 text-sm mt-4">
-                        カメラで撮影してから質問してください
-                    </div>
-                </div>
-
-                <!-- 質問入力エリア -->
-                <div class="space-y-2">
-                    <input
-                        type="text"
-                        id="questionInput"
-                        placeholder="例: これは何ですか？この物体の用途は？"
-                        class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-                        disabled
-                    >
-                    <button
-                        id="askBtn"
-                        class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                        disabled
-                    >
-                        <span>✉️</span> 質問する
-                    </button>
-                </div>
-
-                <!-- 状態表示 -->
-                <div id="statusMessage" class="mt-3 text-sm text-gray-600 text-center hidden">
-                    <span class="loading-spinner inline-block mr-2">⏳</span>
-                    <span id="statusText"></span>
-                </div>
+<body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col">
+    <div class="flex-1 flex flex-col">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-blue-600 to-blue-800 p-6 shadow-lg">
+            <div class="max-w-6xl mx-auto">
+                <h1 class="text-3xl font-bold mb-2">📷 Camera AI Analyzer</h1>
+                <p class="text-blue-100">カメラの映像をAIで分析して質問できます</p>
             </div>
         </div>
 
-        <!-- エラーメッセージ -->
-        <div id="errorAlert" class="fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg hidden max-w-md">
-            <button class="absolute top-2 right-2 text-xl" onclick="this.parentElement.classList.add('hidden')">×</button>
-            <p id="errorMessage"></p>
-        </div>
+        <!-- Main Content -->
+        <div class="flex-1 max-w-6xl mx-auto w-full p-6">
+            <div class="grid md:grid-cols-2 gap-6">
+                <!-- Camera Section -->
+                <div class="flex flex-col gap-4">
+                    <div class="bg-gray-800 rounded-lg shadow-lg p-6">
+                        <h2 class="text-xl font-bold mb-4 text-blue-400">🎥 カメラ</h2>
+                        
+                        <div class="relative mb-4">
+                            <video id="cameraStream" class="w-full rounded-lg bg-black" autoplay playsinline></video>
+                            <button id="captureBtn" class="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-full shadow-lg transition animate-pulse-ring">
+                                📸 撮影
+                            </button>
+                        </div>
 
-        <!-- 成功メッセージ -->
-        <div id="successAlert" class="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg hidden max-w-md">
-            <button class="absolute top-2 right-2 text-xl" onclick="this.parentElement.classList.add('hidden')">×</button>
-            <p id="successMessage"></p>
+                        <canvas id="canvas" class="hidden"></canvas>
+
+                        <!-- Camera Status -->
+                        <div id="cameraStatus" class="bg-yellow-900 bg-opacity-50 border border-yellow-600 text-yellow-200 p-3 rounded-lg mb-4 text-sm">
+                            ⏳ カメラを起動中...
+                        </div>
+
+                        <!-- Captured Image -->
+                        <div id="capturedImageContainer" class="hidden">
+                            <img id="capturedImage" class="w-full rounded-lg mb-3 border-2 border-blue-400" alt="Captured">
+                            <button id="retakeBtn" class="w-full bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition mb-2">
+                                🔄 もう一度撮影
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Question & Analysis Section -->
+                <div class="flex flex-col gap-4">
+                    <div class="bg-gray-800 rounded-lg shadow-lg p-6">
+                        <h2 class="text-xl font-bold mb-4 text-blue-400">❓ 質問と回答</h2>
+
+                        <!-- Question Input -->
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium mb-2">質問を入力してください</label>
+                            <textarea id="questionInput" class="w-full bg-gray-700 text-white placeholder-gray-400 border border-gray-600 rounded-lg p-3 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none" rows="3" placeholder="例：この物体は何ですか？その用途は？"></textarea>
+                            <p class="text-xs text-gray-400 mt-2">未入力の場合は、画像の内容が説明されます</p>
+                        </div>
+
+                        <!-- Analyze Button -->
+                        <button id="analyzeBtn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition mb-4 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                            🤖 AIに分析させる
+                        </button>
+
+                        <!-- Loading Indicator -->
+                        <div id="loadingIndicator" class="hidden mb-4 bg-blue-900 bg-opacity-50 border border-blue-600 text-blue-200 p-4 rounded-lg">
+                            <div class="flex items-center gap-2">
+                                <div class="animate-spin">⚙️</div>
+                                <span>AIが分析中...</span>
+                            </div>
+                        </div>
+
+                        <!-- Answer Display -->
+                        <div id="answerContainer" class="hidden">
+                            <div class="bg-gray-700 rounded-lg p-4 border-l-4 border-green-500">
+                                <p class="text-sm text-gray-400 mb-2">AI の回答：</p>
+                                <p id="answerText" class="text-white leading-relaxed whitespace-pre-wrap"></p>
+                            </div>
+                        </div>
+
+                        <!-- Error Message -->
+                        <div id="errorContainer" class="hidden mb-4 bg-red-900 bg-opacity-50 border border-red-600 text-red-200 p-4 rounded-lg">
+                            <p id="errorText" class="text-sm"></p>
+                        </div>
+                    </div>
+
+                    <!-- Info Panel -->
+                    <div class="bg-gray-800 rounded-lg shadow-lg p-6">
+                        <h3 class="text-sm font-bold mb-3 text-gray-400 uppercase">使い方</h3>
+                        <ol class="text-sm text-gray-300 space-y-2">
+                            <li>📸 <strong>撮影ボタン</strong>でカメラ画像をキャプチャ</li>
+                            <li>❓ <strong>質問を入力</strong>（任意）</li>
+                            <li>🤖 <strong>分析ボタン</strong>でAIが回答</li>
+                            <li>🔄 <strong>もう一度撮影</strong>で新しい画像をキャプチャ</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
+    <!-- Footer -->
+    <div class="bg-gray-800 border-t border-gray-700 p-4 text-center text-gray-400 text-sm">
+        <p>Camera AI Analyzer - Powered by OpenAI GPT-4 Vision</p>
+    </div>
+
     <script>
-        // グローバル状態
-        let stream = null;
         let capturedImageData = null;
-        let mediaRecorder = null;
+        let cameraStream = null;
 
-        // DOM要素
-        const cameraFeed = document.getElementById('cameraFeed');
-        const previewCanvas = document.getElementById('previewCanvas');
-        const noImagePlaceholder = document.getElementById('noImagePlaceholder');
-        const startCameraBtn = document.getElementById('startCameraBtn');
-        const captureBtn = document.getElementById('captureBtn');
-        const stopCameraBtn = document.getElementById('stopCameraBtn');
-        const askBtn = document.getElementById('askBtn');
-        const questionInput = document.getElementById('questionInput');
-        const chatMessages = document.getElementById('chatMessages');
-        const statusMessage = document.getElementById('statusMessage');
-        const statusText = document.getElementById('statusText');
-        const errorAlert = document.getElementById('errorAlert');
-        const errorMessage = document.getElementById('errorMessage');
-        const successAlert = document.getElementById('successAlert');
-        const successMessage = document.getElementById('successMessage');
-
-        // ユーティリティ関数
-        function showError(message) {
-            errorMessage.textContent = message;
-            errorAlert.classList.remove('hidden');
-            setTimeout(() => errorAlert.classList.add('hidden'), 5000);
-        }
-
-        function showSuccess(message) {
-            successMessage.textContent = message;
-            successAlert.classList.remove('hidden');
-            setTimeout(() => successAlert.classList.add('hidden'), 5000);
-        }
-
-        function setStatus(message) {
-            statusText.textContent = message;
-            statusMessage.classList.remove('hidden');
-        }
-
-        function clearStatus() {
-            statusMessage.classList.add('hidden');
-        }
-
-        function addMessage(role, content) {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'message-bubble';
-
-            if (role === 'user') {
-                messageDiv.innerHTML = `
-                    <div class="bg-blue-500 text-white rounded-lg px-4 py-2 ml-8 break-words">
-                        ${escapeHtml(content)}
-                    </div>
-                `;
-            } else {
-                messageDiv.innerHTML = `
-                    <div class="bg-gray-200 text-gray-800 rounded-lg px-4 py-2 mr-8 break-words">
-                        ${escapeHtml(content)}
-                    </div>
-                `;
-            }
-
-            chatMessages.appendChild(messageDiv);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
-
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-        // カメラ制御
-        startCameraBtn.addEventListener('click', async () => {
+        // Initialize camera on page load
+        async function initializeCamera() {
+            const video = document.getElementById('cameraStream');
+            const status = document.getElementById('cameraStatus');
+            
             try {
-                setStatus('カメラを起動中...');
-
-                const constraints = {
-                    video: {
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 },
-                        facingMode: 'environment'
-                    }
-                };
-
-                stream = await navigator.mediaDevices.getUserMedia(constraints);
-                cameraFeed.srcObject = stream;
-
-                startCameraBtn.disabled = true;
-                captureBtn.disabled = false;
-                stopCameraBtn.disabled = false;
-
-                clearStatus();
-                showSuccess('カメラが起動しました');
-            } catch (err) {
-                showError('カメラへのアクセスに失敗しました: ' + err.message);
-                clearStatus();
+                // Request camera access
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment' },
+                    audio: false
+                });
+                
+                video.srcObject = stream;
+                cameraStream = stream;
+                
+                status.className = 'bg-green-900 bg-opacity-50 border border-green-600 text-green-200 p-3 rounded-lg mb-4 text-sm';
+                status.textContent = '✅ カメラが起動しました';
+                
+            } catch (error) {
+                status.className = 'bg-red-900 bg-opacity-50 border border-red-600 text-red-200 p-3 rounded-lg mb-4 text-sm';
+                status.textContent = '❌ カメラへのアクセスが拒否されました: ' + error.message;
+                console.error('Camera access error:', error);
             }
-        });
+        }
 
-        captureBtn.addEventListener('click', () => {
-            try {
-                const ctx = previewCanvas.getContext('2d');
-                previewCanvas.width = cameraFeed.videoWidth;
-                previewCanvas.height = cameraFeed.videoHeight;
-                ctx.drawImage(cameraFeed, 0, 0);
+        // Capture image from video stream
+        function captureImage() {
+            const video = document.getElementById('cameraStream');
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Set canvas size to match video
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            
+            // Draw current video frame to canvas
+            ctx.drawImage(video, 0, 0);
+            
+            // Convert canvas to base64
+            capturedImageData = canvas.toDataURL('image/jpeg', 0.8);
+            
+            // Display captured image
+            const capturedImg = document.getElementById('capturedImage');
+            capturedImg.src = capturedImageData;
+            
+            // Show captured image container, hide video
+            document.getElementById('capturedImageContainer').classList.remove('hidden');
+            
+            // Enable analyze button
+            document.getElementById('analyzeBtn').disabled = false;
+            
+            // Clear previous answers
+            document.getElementById('answerContainer').classList.add('hidden');
+            document.getElementById('errorContainer').classList.add('hidden');
+        }
 
-                capturedImageData = previewCanvas.toDataURL('image/jpeg', 0.9);
+        // Retake image
+        function retakeImage() {
+            document.getElementById('capturedImageContainer').classList.add('hidden');
+            capturedImageData = null;
+            document.getElementById('analyzeBtn').disabled = true;
+            document.getElementById('answerContainer').classList.add('hidden');
+            document.getElementById('errorContainer').classList.add('hidden');
+        }
 
-                previewCanvas.classList.remove('hidden');
-                noImagePlaceholder.classList.add('hidden');
-
-                askBtn.disabled = false;
-                questionInput.disabled = false;
-
-                showSuccess('撮影完了！質問を入力してください');
-            } catch (err) {
-                showError('撮影に失敗しました: ' + err.message);
-            }
-        });
-
-        stopCameraBtn.addEventListener('click', () => {
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop());
-                stream = null;
-            }
-
-            cameraFeed.srcObject = null;
-            startCameraBtn.disabled = false;
-            captureBtn.disabled = true;
-            stopCameraBtn.disabled = true;
-
-            showSuccess('カメラを停止しました');
-        });
-
-        // チャット機能
-        askBtn.addEventListener('click', sendQuestion);
-        questionInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' && !askBtn.disabled) {
-                sendQuestion();
-            }
-        });
-
-        async function sendQuestion() {
-            const question = questionInput.value.trim();
-
-            if (!question) {
-                showError('質問を入力してください');
-                return;
-            }
-
+        // Analyze image with AI
+        async function analyzeImage() {
             if (!capturedImageData) {
-                showError('まず画像を撮影してください');
+                showError('画像が選択されていません');
                 return;
             }
 
+            const question = document.getElementById('questionInput').value.trim();
+            const loading = document.getElementById('loadingIndicator');
+            const analyzeBtn = document.getElementById('analyzeBtn');
+            
+            // Show loading
+            loading.classList.remove('hidden');
+            analyzeBtn.disabled = true;
+            document.getElementById('answerContainer').classList.add('hidden');
+            document.getElementById('errorContainer').classList.add('hidden');
+
             try {
-                askBtn.disabled = true;
-                questionInput.disabled = true;
-                setStatus('AIが分析中...');
+                // Extract base64 from data URL
+                const base64 = capturedImageData.split(',')[1];
 
-                // ユーザーのメッセージを表示
-                addMessage('user', question);
-
-                // API呼び出し
                 const response = await fetch('/api/analyze', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        image: capturedImageData,
+                        image: base64,
                         question: question
                     })
                 });
 
+                const data = await response.json();
+
                 if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.error || 'API呼び出しに失敗しました');
+                    showError(data.error || 'エラーが発生しました');
+                    return;
                 }
 
-                const result = await response.json();
+                // Display answer
+                document.getElementById('answerText').textContent = data.answer;
+                document.getElementById('answerContainer').classList.remove('hidden');
 
-                if (result.success) {
-                    addMessage('assistant', result.result);
-                    questionInput.value = '';
-                    clearStatus();
-                    showSuccess('分析完了！');
-                } else {
-                    throw new Error(result.error || '分析に失敗しました');
-                }
-            } catch (err) {
-                addMessage('assistant', '❌ エラーが発生しました: ' + err.message);
-                showError('エラー: ' + err.message);
+            } catch (error) {
+                showError('通信エラー: ' + error.message);
             } finally {
-                askBtn.disabled = false;
-                questionInput.disabled = false;
-                clearStatus();
+                loading.classList.add('hidden');
+                analyzeBtn.disabled = false;
             }
         }
 
-        // 初期状態を設定
-        captureBtn.disabled = true;
-        stopCameraBtn.disabled = true;
-        askBtn.disabled = true;
-        questionInput.disabled = true;
+        // Show error message
+        function showError(message) {
+            document.getElementById('errorText').textContent = message;
+            document.getElementById('errorContainer').classList.remove('hidden');
+        }
 
-        // ページロード時にチャットメッセージをクリア
-        chatMessages.innerHTML = '<div class="text-center text-gray-500 text-sm mt-4">カメラで撮影してから質問してください</div>';
+        // Event listeners
+        document.getElementById('captureBtn').addEventListener('click', captureImage);
+        document.getElementById('retakeBtn').addEventListener('click', retakeImage);
+        document.getElementById('analyzeBtn').addEventListener('click', analyzeImage);
+
+        // Initialize camera on page load
+        window.addEventListener('load', initializeCamera);
+
+        // Clean up camera stream on page unload
+        window.addEventListener('beforeunload', () => {
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+            }
+        });
     </script>
 </body>
 </html>

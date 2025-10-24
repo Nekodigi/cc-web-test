@@ -1,46 +1,41 @@
 import os
 import base64
 import json
-from flask import Flask, request, jsonify, send_file
-from flask_cors import CORS
-from openai import OpenAI, APIError, APIConnectionError, RateLimitError
 from io import BytesIO
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+from dotenv import load_dotenv
+from openai import OpenAI
+import logging
 
+# Load environment variables
+load_dotenv()
+
+# Initialize Flask app
 app = Flask(__name__)
 CORS(app)
 
-# OpenAI API設定
-client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-@app.route('/', methods=['GET'])
-def index():
-    """HTMLを提供"""
+# Initialize OpenAI client
+openai_api_key = os.getenv('OPENAI_API_KEY')
+if not openai_api_key:
+    logger.warning("OPENAI_API_KEY not found in environment variables")
+    client = None
+else:
+    client = OpenAI(api_key=openai_api_key)
+
+
+def analyze_image_with_context(base64_image: str, question: str) -> str:
+    """Analyze image using GPT-4 Vision and answer the question"""
+    if not client:
+        return "Error: OpenAI API key not configured"
+    
     try:
-        with open('index.html', 'r', encoding='utf-8') as f:
-            return f.read()
-    except FileNotFoundError:
-        return "index.html not found", 404
-
-@app.route('/api/analyze', methods=['POST'])
-def analyze_image():
-    """カメラから送られた画像をAIが分析"""
-    try:
-        data = request.get_json()
-
-        if not data or 'image' not in data:
-            return jsonify({'error': 'No image provided'}), 400
-
-        # Base64エンコードされた画像データを取得
-        image_data = data['image']
-        question = data.get('question', 'この画像に何が写っていますか？')
-
-        # base64プレフィックスを削除
-        if ',' in image_data:
-            image_data = image_data.split(',')[1]
-
-        # OpenAI Vision APIを使用（GPT-4o を使用）
         response = client.chat.completions.create(
-            model="gpt-4o",
+            model="gpt-4-vision-preview",
             messages=[
                 {
                     "role": "user",
@@ -48,76 +43,70 @@ def analyze_image():
                         {
                             "type": "image_url",
                             "image_url": {
-                                "url": f"data:image/jpeg;base64,{image_data}"
+                                "url": f"data:image/jpeg;base64,{base64_image}"
                             }
                         },
                         {
                             "type": "text",
-                            "text": question
+                            "text": question or "この画像の内容について詳しく説明してください。"
                         }
                     ]
                 }
             ],
             max_tokens=1024
         )
-
-        result = response.choices[0].message.content
-
-        return jsonify({
-            'success': True,
-            'result': result,
-            'question': question
-        })
-
+        return response.choices[0].message.content
     except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        logger.error(f"Error analyzing image: {str(e)}")
+        return f"Error: {str(e)}"
 
-@app.route('/api/chat', methods=['POST'])
-def chat():
-    """チャットエンドポイント"""
+
+@app.route('/api/analyze', methods=['POST'])
+def analyze():
+    """Endpoint to analyze image and answer questions"""
     try:
         data = request.get_json()
-        message = data.get('message', '')
-
-        if not message:
-            return jsonify({'error': 'No message provided'}), 400
-
-        response = client.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {
-                    "role": "user",
-                    "content": message
-                }
-            ],
-            max_tokens=1024
-        )
-
-        result = response.choices[0].message.content
-
+        
+        if not data or 'image' not in data:
+            return jsonify({'error': 'No image provided'}), 400
+        
+        base64_image = data.get('image', '')
+        question = data.get('question', '')
+        
+        # Remove data URI prefix if present
+        if ',' in base64_image:
+            base64_image = base64_image.split(',')[1]
+        
+        # Analyze the image
+        answer = analyze_image_with_context(base64_image, question)
+        
         return jsonify({
             'success': True,
-            'result': result
+            'answer': answer,
+            'question': question
         })
-
     except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        logger.error(f"Error in /api/analyze: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
 
 @app.route('/api/health', methods=['GET'])
 def health():
-    """ヘルスチェック"""
-    return jsonify({
-        'status': 'ok',
-        'model': 'camera-ai-app'
-    })
+    """Health check endpoint"""
+    return jsonify({'status': 'ok', 'service': 'Camera AI Analyzer'})
+
+
+@app.route('/', methods=['GET'])
+def index():
+    """Serve the main HTML file"""
+    try:
+        with open('index.html', 'r', encoding='utf-8') as f:
+            return f.read()
+    except FileNotFoundError:
+        return "index.html not found", 404
+
 
 if __name__ == '__main__':
-    # Cloud Functionsでは自動でポート3000にバインドされます
+    # Get port from environment variable or default to 3000
     port = int(os.getenv('PORT', 3000))
     app.run(host='0.0.0.0', port=port, debug=False)
