@@ -1,0 +1,16 @@
+I can see the issue. The functions framework is looking for a function named `main`, but your `/content/main.py` file doesn't have one. Let me first examine the file to understand its current structure.
+I see the issue. Your Flask app is set up correctly, but the Google Cloud Functions framework expects a function named `main`. You need to add a `main` function that serves as the entry point for the Cloud Functions deployment. This function should wrap your Flask app.
+
+Let me fix this:
+Perfect! I've added a `main` function to your `main.py` file. This function:
+
+1. **Acts as the entry point** for Google Cloud Functions framework
+2. **Wraps your Flask app** using the WSGI interface by calling `app()` with the request environment
+3. **Maintains local development compatibility** - your existing `if __name__ == '__main__'` block still allows running locally with `python main.py`
+
+Now the functions framework should be able to find and load the `main` function. You can try running the framework again with:
+
+```bash
+functions-framework --target=main --debug
+```
+[bold green]生成コスト: ¥2[/bold green]

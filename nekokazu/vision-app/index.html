@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI カメラ質問アプリ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .camera-feed {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div id="app" class="flex flex-col h-screen bg-gray-100">
+        <!-- Header -->
+        <header class="bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg">
+            <div class="max-w-4xl mx-auto px-4 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4z"></path>
+                            <path fill-rule="evenodd" d="M3 10a1 1 0 011-1h12a1 1 0 011 1v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6zM9 15a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path>
+                        </svg>
+                        <h1 class="text-2xl font-bold">AI カメラ質問アプリ</h1>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="flex-1 overflow-y-auto">
+            <div class="max-w-4xl mx-auto px-4 py-8 w-full">
+                <!-- Camera Section -->
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden fade-in">
+                    <div class="camera-feed aspect-video flex items-center justify-center relative">
+                        <video id="camera" class="w-full h-full object-cover hidden"></video>
+                        <canvas id="canvas" class="hidden"></canvas>
+                        <div id="cameraPlaceholder" class="text-white text-center">
+                            <svg class="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                            <p class="text-lg font-semibold">カメラを起動中...</p>
+                        </div>
+                        <div id="capturedImage" class="hidden w-full h-full">
+                            <img id="capturedImageDisplay" src="" alt="撮影画像" class="w-full h-full object-cover">
+                        </div>
+                    </div>
+
+                    <!-- Controls -->
+                    <div class="bg-gray-50 border-t border-gray-200 p-4">
+                        <div class="flex gap-3 justify-center flex-wrap">
+                            <button id="startCameraBtn" onclick="startCamera()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition duration-200 flex items-center gap-2">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M4.5 3a2 2 0 00-2 2v10a2 2 0 002 2h11a2 2 0 002-2V5a2 2 0 00-2-2h-11zM14 6a1 1 0 11-2 0 1 1 0 012 0z"></path>
+                                </svg>
+                                カメラ起動
+                            </button>
+                            <button id="captureBtn" onclick="captureImage()" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-6 rounded-lg transition duration-200 flex items-center gap-2 hidden">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"></path>
+                                </svg>
+                                撮影
+                            </button>
+                            <button id="retakeBtn" onclick="retakePhoto()" class="bg-yellow-600 hover:bg-yellow-700 text-white font-semibold py-2 px-6 rounded-lg transition duration-200 flex items-center gap-2 hidden">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 1119.778 6.578 1 1 0 11-1.896.34A5.002 5.002 0 1013.5 5V4a1 1 0 11-2 0V2a1 1 0 011-1h4z" clip-rule="evenodd"></path>
+                                </svg>
+                                撮り直し
+                            </button>
+                            <button id="stopCameraBtn" onclick="stopCamera()" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-6 rounded-lg transition duration-200 flex items-center gap-2 hidden">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                                </svg>
+                                停止
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Question Section -->
+                <div id="questionSection" class="mt-6 bg-white rounded-xl shadow-lg p-6 hidden fade-in">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">画像について質問する</h2>
+                    <div class="flex gap-3">
+                        <input
+                            id="questionInput"
+                            type="text"
+                            placeholder="例: この画像に何が写っていますか？"
+                            class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            onkeypress="handleEnter(event)"
+                        >
+                        <button
+                            id="submitBtn"
+                            onclick="submitQuestion()"
+                            class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200 flex items-center gap-2"
+                        >
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5.951-1.429 5.951 1.429a1 1 0 001.169-1.409l-7-14z"></path>
+                            </svg>
+                            質問
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Answer Section -->
+                <div id="answerSection" class="mt-6 bg-white rounded-xl shadow-lg p-6 hidden fade-in">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">回答</h2>
+                    <div id="answerSpinner" class="flex items-center justify-center py-8 hidden">
+                        <div class="spinner mr-4"></div>
+                        <span class="text-gray-600">回答を生成中...</span>
+                    </div>
+                    <div id="answerContent" class="text-gray-700 leading-relaxed whitespace-pre-wrap"></div>
+                </div>
+
+                <!-- Error Section -->
+                <div id="errorSection" class="mt-6 bg-red-50 border border-red-200 rounded-xl p-6 hidden fade-in">
+                    <div class="flex items-start gap-3">
+                        <svg class="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                        </svg>
+                        <div>
+                            <h3 class="font-semibold text-red-800">エラーが発生しました</h3>
+                            <p id="errorMessage" class="text-red-700 mt-1"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="bg-gray-800 text-gray-300 text-center py-4 text-sm">
+            <p>AI カメラ質問アプリ © 2024</p>
+        </footer>
+    </div>
+
+    <script>
+        let stream = null;
+        let isCameraActive = false;
+        let capturedImageData = null;
+
+        async function startCamera() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment' },
+                    audio: false
+                });
+
+                const video = document.getElementById('camera');
+                video.srcObject = stream;
+
+                // Wait for video metadata to load
+                video.onloadedmetadata = function() {
+                    video.play().catch(e => {
+                        console.error('Error playing video:', e);
+                    });
+                };
+
+                video.classList.remove('hidden');
+                document.getElementById('cameraPlaceholder').classList.add('hidden');
+
+                isCameraActive = true;
+                updateButtons();
+            } catch (err) {
+                showError('カメラへのアクセスが拒否されました。ブラウザの設定を確認してください。');
+                console.error(err);
+            }
+        }
+
+        function captureImage() {
+            if (!isCameraActive) return;
+
+            const video = document.getElementById('camera');
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+
+            // Ensure video dimensions are available
+            if (video.videoWidth === 0 || video.videoHeight === 0) {
+                showError('ビデオのメタデータがまだ読み込まれていません。少し待ってから再度試してください。');
+                return;
+            }
+
+            // Set canvas size to match video
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+
+            // Draw video frame to canvas with proper scaling
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Get image data
+            capturedImageData = canvas.toDataURL('image/jpeg', 0.95);
+
+            // Display captured image
+            const capturedImageDisplay = document.getElementById('capturedImageDisplay');
+            capturedImageDisplay.src = capturedImageData;
+            document.getElementById('capturedImage').classList.remove('hidden');
+            video.classList.add('hidden');
+
+            isCameraActive = false;
+            updateButtons();
+            showQuestionSection();
+        }
+
+        function retakePhoto() {
+            if (!stream) return;
+
+            const video = document.getElementById('camera');
+            video.classList.remove('hidden');
+            document.getElementById('capturedImage').classList.add('hidden');
+
+            isCameraActive = true;
+            updateButtons();
+            hideAnswerSection();
+        }
+
+        function stopCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+
+            const video = document.getElementById('camera');
+            video.classList.add('hidden');
+            document.getElementById('cameraPlaceholder').classList.remove('hidden');
+            document.getElementById('capturedImage').classList.add('hidden');
+
+            isCameraActive = false;
+            capturedImageData = null;
+            updateButtons();
+            hideQuestionSection();
+            hideAnswerSection();
+        }
+
+        function updateButtons() {
+            const startBtn = document.getElementById('startCameraBtn');
+            const captureBtn = document.getElementById('captureBtn');
+            const retakeBtn = document.getElementById('retakeBtn');
+            const stopBtn = document.getElementById('stopCameraBtn');
+
+            if (isCameraActive && capturedImageData === null) {
+                // Camera is active, no photo captured
+                startBtn.classList.add('hidden');
+                captureBtn.classList.remove('hidden');
+                retakeBtn.classList.add('hidden');
+                stopBtn.classList.remove('hidden');
+            } else if (capturedImageData !== null) {
+                // Photo is captured
+                startBtn.classList.add('hidden');
+                captureBtn.classList.add('hidden');
+                retakeBtn.classList.remove('hidden');
+                stopBtn.classList.remove('hidden');
+            } else {
+                // Camera is off
+                startBtn.classList.remove('hidden');
+                captureBtn.classList.add('hidden');
+                retakeBtn.classList.add('hidden');
+                stopBtn.classList.add('hidden');
+            }
+        }
+
+        function showQuestionSection() {
+            document.getElementById('questionSection').classList.remove('hidden');
+        }
+
+        function hideQuestionSection() {
+            document.getElementById('questionSection').classList.add('hidden');
+        }
+
+        function hideAnswerSection() {
+            document.getElementById('answerSection').classList.add('hidden');
+            document.getElementById('answerSpinner').classList.add('hidden');
+            document.getElementById('answerContent').textContent = '';
+        }
+
+        function showErrorSection(message) {
+            document.getElementById('errorMessage').textContent = message;
+            document.getElementById('errorSection').classList.remove('hidden');
+        }
+
+        function hideErrorSection() {
+            document.getElementById('errorSection').classList.add('hidden');
+        }
+
+        function showError(message) {
+            showErrorSection(message);
+            setTimeout(() => hideErrorSection(), 5000);
+        }
+
+        function handleEnter(event) {
+            if (event.key === 'Enter') {
+                submitQuestion();
+            }
+        }
+
+        async function submitQuestion() {
+            if (!capturedImageData) {
+                showError('先に画像を撮影してください');
+                return;
+            }
+
+            const question = document.getElementById('questionInput').value.trim();
+            if (!question) {
+                showError('質問を入力してください');
+                return;
+            }
+
+            hideErrorSection();
+            document.getElementById('answerSection').classList.remove('hidden');
+            document.getElementById('answerSpinner').classList.remove('hidden');
+            document.getElementById('answerContent').textContent = '';
+
+            try {
+                const response = await fetch('/api/analyze-image', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        image: capturedImageData,
+                        question: question,
+                        imageType: 'image/jpeg'
+                    })
+                });
+
+                const data = await response.json();
+
+                document.getElementById('answerSpinner').classList.add('hidden');
+
+                if (data.success) {
+                    document.getElementById('answerContent').textContent = data.answer;
+                } else {
+                    showError(data.error || 'エラーが発生しました');
+                }
+            } catch (err) {
+                document.getElementById('answerSpinner').classList.add('hidden');
+                showError('質問の送信に失敗しました: ' + err.message);
+                console.error(err);
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateButtons();
+        });
+    </script>
+</body>
+</html>
