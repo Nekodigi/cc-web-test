@@ -6,34 +6,12 @@ from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 import qrcode
 from io import BytesIO
-import firebase_admin
-from firebase_admin import credentials, db
 
 app = Flask(__name__)
 CORS(app)
 
-# Firebase初期化
-if not firebase_admin._apps:
-    cred = credentials.Certificate({
-        "type": "service_account",
-        "project_id": "sandbox-35d1d",
-        "private_key_id": os.environ.get("FIREBASE_PRIVATE_KEY_ID", ""),
-        "private_key": os.environ.get("FIREBASE_PRIVATE_KEY", "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC\n-----END PRIVATE KEY-----\n").replace('\\n', '\n'),
-        "client_email": f"firebase-adminsdk@sandbox-35d1d.iam.gserviceaccount.com",
-        "client_id": "",
-        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-        "token_uri": "https://oauth2.googleapis.com/token",
-        "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs"
-    })
-    firebase_admin.initialize_app(cred, {
-        'databaseURL': 'https://sandbox-35d1d-default-rtdb.firebaseio.com'
-    })
-
-DEVELOPER_ID = os.environ.get('DEVELOPER_ID', 'default')
-APP_ID = os.environ.get('APP_ID', 'ticket-app')
-
-def get_db_ref():
-    return db.reference(f'pracClass/{DEVELOPER_ID}/apps/{APP_ID}')
+# メモリ内ストレージ（登録不要・シンプル・高可用性）
+tickets_storage = {}
 
 @app.route('/')
 def index():
@@ -56,9 +34,8 @@ def create_ticket():
             'used_at': None
         }
 
-        # Firebaseに保存
-        ref = get_db_ref()
-        ref.child('tickets').child(ticket_id).set(ticket_data)
+        # メモリに保存
+        tickets_storage[ticket_id] = ticket_data
 
         return jsonify({
             'success': True,
@@ -101,8 +78,7 @@ def get_qr_code(ticket_id):
 def get_ticket(ticket_id):
     """チケット情報取得"""
     try:
-        ref = get_db_ref()
-        ticket = ref.child('tickets').child(ticket_id).get()
+        ticket = tickets_storage.get(ticket_id)
 
         if not ticket:
             return jsonify({'success': False, 'error': 'チケットが見つかりません'}), 404
@@ -118,9 +94,7 @@ def get_ticket(ticket_id):
 def verify_ticket(ticket_id):
     """チケット検証・使用"""
     try:
-        ref = get_db_ref()
-        ticket_ref = ref.child('tickets').child(ticket_id)
-        ticket = ticket_ref.get()
+        ticket = tickets_storage.get(ticket_id)
 
         if not ticket:
             return jsonify({'success': False, 'error': 'チケットが見つかりません'}), 404
@@ -136,7 +110,7 @@ def verify_ticket(ticket_id):
 
             ticket['used'] = True
             ticket['used_at'] = datetime.now().isoformat()
-            ticket_ref.update(ticket)
+            tickets_storage[ticket_id] = ticket
 
         return jsonify({
             'success': True,
@@ -149,14 +123,11 @@ def verify_ticket(ticket_id):
 def list_tickets():
     """チケット一覧取得"""
     try:
-        ref = get_db_ref()
-        tickets = ref.child('tickets').get()
-
-        if not tickets:
+        if not tickets_storage:
             return jsonify({'success': True, 'tickets': []})
 
         # 辞書から配列に変換
-        ticket_list = [v for k, v in tickets.items()]
+        ticket_list = list(tickets_storage.values())
         # 作成日時でソート（新しい順）
         ticket_list.sort(key=lambda x: x.get('created_at', ''), reverse=True)
 

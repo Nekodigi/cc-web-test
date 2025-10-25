@@ -1,6 +1,5 @@
-Flask==3.0.0
-flask-cors==4.0.0
-qrcode==7.4.2
-Pillow==10.2.0
-firebase-admin==6.4.0
-functions-framework==3.5.0
+Flask==3.1.0
+flask-cors==5.0.0
+qrcode==8.0
+Pillow==11.0.0
+functions-framework==3.8.1
