@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>電卓アプリ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-purple-500 to-pink-500 min-h-screen flex items-center justify-center p-4">
+    <div class="bg-gray-900 rounded-3xl shadow-2xl p-6 w-full max-w-md">
+        <div class="mb-6">
+            <div class="bg-gray-800 rounded-2xl p-6 mb-4">
+                <div id="display" class="text-right text-white text-5xl font-light min-h-[60px] break-all">0</div>
+                <div id="expression" class="text-right text-gray-400 text-lg mt-2 min-h-[28px]"></div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-4 gap-3">
+            <!-- Row 1 -->
+            <button onclick="clearDisplay()" class="col-span-2 bg-gray-600 hover:bg-gray-500 text-white text-2xl font-semibold py-6 rounded-2xl transition duration-200 active:scale-95">AC</button>
+            <button onclick="deleteLast()" class="bg-gray-600 hover:bg-gray-500 text-white text-2xl font-semibold py-6 rounded-2xl transition duration-200 active:scale-95">DEL</button>
+            <button onclick="appendOperator('/')" class="bg-orange-500 hover:bg-orange-400 text-white text-2xl font-semibold py-6 rounded-2xl transition duration-200 active:scale-95">÷</button>
+
+            <!-- Row 2 -->
+            <button onclick="appendNumber('7')" class="bg-gray-700 hover:bg-gray-600 text-white text-2xl font-semibold py-6 rounded-2xl transition duration-200 active:scale-95">7</button>
+            <button onclick="appendNumber('8')" class="bg-gray-700 hover:bg-gray-600 text-white text-2xl font-semibold py-6 rounded-2xl transition duration-200 active:scale-95">8</button>
+            <button onclick="appendNumber('9')" class="bg-gray-700 hover:bg-gray-600 text-white text-2xl font-semibold py-6 rounded-2xl transition duration-200 active:scale-95">9</button>
+            <button onclick="appendOperator('*')" class="bg-orange-500 hover:bg-orange-400 text-white text-2xl font-semibold py-6 rounded-2xl transition duration-200 active:scale-95">×</button>
+
+            <!-- Row 3 -->
+            <button onclick="appendNumber('4')" class="bg-gray-700 hover:bg-gray-600 text-white text-2xl font-semibold py-6 rounded-2xl transition duration-200 active:scale-95">4</button>
+            <button onclick="appendNumber('5')" class="bg-gray-700 hover:bg-gray-600 text-white text-2xl font-semibold py-6 rounded-2xl transition duration-200 active:scale-95">5</button>
+            <button onclick="appendNumber('6')" class="bg-gray-700 hover:bg-gray-600 text-white text-2xl font-semibold py-6 rounded-2xl transition duration-200 active:scale-95">6</button>
+            <button onclick="appendOperator('-')" class="bg-orange-500 hover:bg-orange-400 text-white text-2xl font-semibold py-6 rounded-2xl transition duration-200 active:scale-95">-</button>
+
+            <!-- Row 4 -->
+            <button onclick="appendNumber('1')" class="bg-gray-700 hover:bg-gray-600 text-white text-2xl font-semibold py-6 rounded-2xl transition duration-200 active:scale-95">1</button>
+            <button onclick="appendNumber('2')" class="bg-gray-700 hover:bg-gray-600 text-white text-2xl font-semibold py-6 rounded-2xl transition duration-200 active:scale-95">2</button>
+            <button onclick="appendNumber('3')" class="bg-gray-700 hover:bg-gray-600 text-white text-2xl font-semibold py-6 rounded-2xl transition duration-200 active:scale-95">3</button>
+            <button onclick="appendOperator('+')" class="bg-orange-500 hover:bg-orange-400 text-white text-2xl font-semibold py-6 rounded-2xl transition duration-200 active:scale-95">+</button>
+
+            <!-- Row 5 -->
+            <button onclick="appendNumber('0')" class="col-span-2 bg-gray-700 hover:bg-gray-600 text-white text-2xl font-semibold py-6 rounded-2xl transition duration-200 active:scale-95">0</button>
+            <button onclick="appendNumber('.')" class="bg-gray-700 hover:bg-gray-600 text-white text-2xl font-semibold py-6 rounded-2xl transition duration-200 active:scale-95">.</button>
+            <button onclick="calculate()" class="bg-green-500 hover:bg-green-400 text-white text-2xl font-semibold py-6 rounded-2xl transition duration-200 active:scale-95">=</button>
+        </div>
+    </div>
+
+    <script>
+        let currentValue = '0';
+        let expression = '';
+        let lastResult = null;
+
+        function updateDisplay() {
+            document.getElementById('display').textContent = currentValue;
+            document.getElementById('expression').textContent = expression;
+        }
+
+        function appendNumber(num) {
+            if (currentValue === '0' || lastResult !== null) {
+                currentValue = num;
+                lastResult = null;
+            } else {
+                currentValue += num;
+            }
+            updateDisplay();
+        }
+
+        function appendOperator(op) {
+            if (expression && !lastResult) {
+                calculate();
+            }
+
+            let displayOp = op;
+            if (op === '*') displayOp = '×';
+            if (op === '/') displayOp = '÷';
+
+            expression = currentValue + ' ' + displayOp;
+            lastResult = currentValue;
+            currentValue = '0';
+            updateDisplay();
+        }
+
+        function calculate() {
+            if (!expression) return;
+
+            try {
+                const parts = expression.split(' ');
+                const firstNum = parseFloat(parts[0]);
+                let operator = parts[1];
+
+                if (operator === '×') operator = '*';
+                if (operator === '÷') operator = '/';
+
+                const secondNum = parseFloat(currentValue);
+                let result;
+
+                switch(operator) {
+                    case '+':
+                        result = firstNum + secondNum;
+                        break;
+                    case '-':
+                        result = firstNum - secondNum;
+                        break;
+                    case '*':
+                        result = firstNum * secondNum;
+                        break;
+                    case '/':
+                        if (secondNum === 0) {
+                            currentValue = 'Error';
+                            expression = '';
+                            updateDisplay();
+                            return;
+                        }
+                        result = firstNum / secondNum;
+                        break;
+                }
+
+                // 小数点以下の処理
+                result = Math.round(result * 100000000) / 100000000;
+
+                currentValue = result.toString();
+                expression = '';
+                lastResult = result;
+                updateDisplay();
+            } catch (e) {
+                currentValue = 'Error';
+                expression = '';
+                updateDisplay();
+            }
+        }
+
+        function clearDisplay() {
+            currentValue = '0';
+            expression = '';
+            lastResult = null;
+            updateDisplay();
+        }
+
+        function deleteLast() {
+            if (currentValue.length > 1) {
+                currentValue = currentValue.slice(0, -1);
+            } else {
+                currentValue = '0';
+            }
+            updateDisplay();
+        }
+
+        // キーボード入力対応
+        document.addEventListener('keydown', function(event) {
+            if (event.key >= '0' && event.key <= '9') {
+                appendNumber(event.key);
+            } else if (event.key === '.') {
+                appendNumber('.');
+            } else if (event.key === '+' || event.key === '-' || event.key === '*' || event.key === '/') {
+                appendOperator(event.key);
+            } else if (event.key === 'Enter' || event.key === '=') {
+                event.preventDefault();
+                calculate();
+            } else if (event.key === 'Escape') {
+                clearDisplay();
+            } else if (event.key === 'Backspace') {
+                event.preventDefault();
+                deleteLast();
+            }
+        });
+
+        updateDisplay();
+    </script>
+</body>
+</html>
