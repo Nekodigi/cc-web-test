@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>電卓アプリ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-gray-900 to-gray-800 min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-md">
+        <div class="bg-gray-800 rounded-3xl shadow-2xl p-6 border border-gray-700">
+            <div class="mb-6">
+                <div class="bg-gray-900 rounded-2xl p-6 mb-4 border border-gray-700">
+                    <div id="expression" class="text-gray-400 text-right text-sm min-h-6 mb-2"></div>
+                    <div id="display" class="text-white text-right text-4xl font-light min-h-12 break-words">0</div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-4 gap-3">
+                <button onclick="clearAll()" class="btn bg-red-600 hover:bg-red-700 col-span-2">AC</button>
+                <button onclick="deleteLast()" class="btn bg-gray-600 hover:bg-gray-700">DEL</button>
+                <button onclick="appendOperator('/')" class="btn bg-orange-600 hover:bg-orange-700">÷</button>
+
+                <button onclick="appendNumber('7')" class="btn bg-gray-700 hover:bg-gray-600">7</button>
+                <button onclick="appendNumber('8')" class="btn bg-gray-700 hover:bg-gray-600">8</button>
+                <button onclick="appendNumber('9')" class="btn bg-gray-700 hover:bg-gray-600">9</button>
+                <button onclick="appendOperator('*')" class="btn bg-orange-600 hover:bg-orange-700">×</button>
+
+                <button onclick="appendNumber('4')" class="btn bg-gray-700 hover:bg-gray-600">4</button>
+                <button onclick="appendNumber('5')" class="btn bg-gray-700 hover:bg-gray-600">5</button>
+                <button onclick="appendNumber('6')" class="btn bg-gray-700 hover:bg-gray-600">6</button>
+                <button onclick="appendOperator('-')" class="btn bg-orange-600 hover:bg-orange-700">-</button>
+
+                <button onclick="appendNumber('1')" class="btn bg-gray-700 hover:bg-gray-600">1</button>
+                <button onclick="appendNumber('2')" class="btn bg-gray-700 hover:bg-gray-600">2</button>
+                <button onclick="appendNumber('3')" class="btn bg-gray-700 hover:bg-gray-600">3</button>
+                <button onclick="appendOperator('+')" class="btn bg-orange-600 hover:bg-orange-700">+</button>
+
+                <button onclick="appendNumber('0')" class="btn bg-gray-700 hover:bg-gray-600 col-span-2">0</button>
+                <button onclick="appendNumber('.')" class="btn bg-gray-700 hover:bg-gray-600">.</button>
+                <button onclick="calculate()" class="btn bg-green-600 hover:bg-green-700">=</button>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .btn {
+            @apply rounded-xl text-white text-xl font-semibold py-5 transition-all duration-200 active:scale-95 shadow-lg;
+        }
+    </style>
+
+    <script>
+        let currentInput = '';
+        let expression = '';
+
+        function updateDisplay() {
+            const display = document.getElementById('display');
+            const expressionDiv = document.getElementById('expression');
+            display.textContent = currentInput || '0';
+            expressionDiv.textContent = expression;
+        }
+
+        function appendNumber(num) {
+            if (currentInput === '0' && num !== '.') {
+                currentInput = num;
+            } else if (num === '.' && currentInput.includes('.')) {
+                return;
+            } else {
+                currentInput += num;
+            }
+            updateDisplay();
+        }
+
+        function appendOperator(op) {
+            if (currentInput) {
+                expression += currentInput + ' ' + op + ' ';
+                currentInput = '';
+                updateDisplay();
+            }
+        }
+
+        function clearAll() {
+            currentInput = '';
+            expression = '';
+            updateDisplay();
+        }
+
+        function deleteLast() {
+            if (currentInput) {
+                currentInput = currentInput.slice(0, -1);
+            } else if (expression) {
+                expression = expression.trim().slice(0, -1).trim();
+            }
+            updateDisplay();
+        }
+
+        async function calculate() {
+            if (!currentInput && !expression) return;
+
+            const fullExpression = expression + currentInput;
+
+            try {
+                const response = await fetch('/api/calculate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ expression: fullExpression })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    expression = fullExpression + ' =';
+                    currentInput = data.result.toString();
+                    updateDisplay();
+                    setTimeout(() => {
+                        expression = '';
+                        updateDisplay();
+                    }, 2000);
+                } else {
+                    alert(data.error || '計算エラー');
+                }
+            } catch (error) {
+                alert('サーバーエラーが発生しました');
+            }
+        }
+
+        // キーボードサポート
+        document.addEventListener('keydown', (e) => {
+            if (e.key >= '0' && e.key <= '9' || e.key === '.') {
+                appendNumber(e.key);
+            } else if (e.key === '+' || e.key === '-' || e.key === '*' || e.key === '/') {
+                appendOperator(e.key);
+            } else if (e.key === 'Enter' || e.key === '=') {
+                e.preventDefault();
+                calculate();
+            } else if (e.key === 'Escape') {
+                clearAll();
+            } else if (e.key === 'Backspace') {
+                deleteLast();
+            }
+        });
+
+        updateDisplay();
+    </script>
+</body>
+</html>
