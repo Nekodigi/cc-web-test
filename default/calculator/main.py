@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, jsonify
 import os
+import math
 
 app = Flask(__name__, static_folder='.', static_url_path='')
 
@@ -7,19 +8,52 @@ app = Flask(__name__, static_folder='.', static_url_path='')
 def index():
     return app.send_static_file('index.html')
 
+def safe_eval(expression):
+    """安全に数式を評価する"""
+    # π を math.pi に置換
+    expression = expression.replace('π', str(math.pi))
+    expression = expression.replace('e', str(math.e))
+
+    # 関数名の置換
+    expression = expression.replace('sin(', 'math.sin(')
+    expression = expression.replace('cos(', 'math.cos(')
+    expression = expression.replace('tan(', 'math.tan(')
+    expression = expression.replace('asin(', 'math.asin(')
+    expression = expression.replace('acos(', 'math.acos(')
+    expression = expression.replace('atan(', 'math.atan(')
+    expression = expression.replace('log(', 'math.log10(')
+    expression = expression.replace('ln(', 'math.log(')
+    expression = expression.replace('sqrt(', 'math.sqrt(')
+    expression = expression.replace('pow(', 'math.pow(')
+    expression = expression.replace('^', '**')
+
+    # 安全性チェック: 許可された文字のみ
+    allowed_chars = set('0123456789+-*/().mathsincolgtanqrpwe*,% ')
+    if not all(c in allowed_chars for c in expression):
+        raise ValueError("Invalid characters in expression")
+
+    # 評価
+    result = eval(expression, {"__builtins__": {}}, {"math": math})
+    return result
+
 @app.route('/api/calculate', methods=['POST'])
 def calculate():
     try:
         data = request.get_json()
         expression = data.get('expression', '')
 
-        # セキュリティのため、許可された文字のみを処理
-        allowed_chars = set('0123456789+-*/().% ')
-        if not all(c in allowed_chars for c in expression):
-            return jsonify({'error': '無効な文字が含まれています'}), 400
+        if not expression:
+            return jsonify({'error': 'No expression provided'}), 400
 
-        # 計算実行
-        result = eval(expression)
+        result = safe_eval(expression)
+
+        # 結果を適切にフォーマット
+        if isinstance(result, float):
+            if result.is_integer():
+                result = int(result)
+            else:
+                result = round(result, 10)
+
         return jsonify({'result': result})
     except ZeroDivisionError:
         return jsonify({'error': '0で割ることはできません'}), 400
