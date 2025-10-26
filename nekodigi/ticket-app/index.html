@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QRチケットアプリ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <h1 class="text-4xl font-bold text-center mb-8 text-blue-600">QRチケットアプリ</h1>
+
+        <!-- タブナビゲーション -->
+        <div class="flex mb-6 bg-white rounded-lg shadow-md overflow-hidden">
+            <button onclick="showTab('create')" id="tab-create" class="flex-1 py-4 px-6 font-semibold transition-colors bg-blue-500 text-white">
+                チケット作成
+            </button>
+            <button onclick="showTab('validate')" id="tab-validate" class="flex-1 py-4 px-6 font-semibold transition-colors hover:bg-gray-100">
+                チケット検証
+            </button>
+            <button onclick="showTab('stats')" id="tab-stats" class="flex-1 py-4 px-6 font-semibold transition-colors hover:bg-gray-100">
+                統計
+            </button>
+        </div>
+
+        <!-- チケット作成タブ -->
+        <div id="content-create" class="tab-content">
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h2 class="text-2xl font-bold mb-4">新しいチケットを作成</h2>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 font-semibold mb-2">イベント名</label>
+                    <input type="text" id="event-name" placeholder="例: 夏祭り 2024"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 font-semibold mb-2">チケット枚数</label>
+                    <input type="number" id="ticket-count" value="1" min="1" max="50"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+
+                <button onclick="createTickets()"
+                    class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg transition-colors">
+                    チケット作成
+                </button>
+            </div>
+
+            <div id="tickets-display" class="space-y-4"></div>
+        </div>
+
+        <!-- チケット検証タブ -->
+        <div id="content-validate" class="tab-content hidden">
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h2 class="text-2xl font-bold mb-4">チケット検証</h2>
+
+                <!-- カメラスキャン -->
+                <div class="mb-6">
+                    <button onclick="startCamera()" id="start-camera-btn"
+                        class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg transition-colors mb-4">
+                        カメラでスキャン
+                    </button>
+                    <div id="camera-container" class="hidden">
+                        <video id="video" class="w-full rounded-lg mb-2" autoplay playsinline></video>
+                        <canvas id="canvas" class="hidden"></canvas>
+                        <button onclick="stopCamera()"
+                            class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                            カメラを停止
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 手動入力 -->
+                <div class="mb-4">
+                    <label class="block text-gray-700 font-semibold mb-2">チケットID (手動入力)</label>
+                    <input type="text" id="ticket-id-input" placeholder="チケットIDを入力"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                </div>
+
+                <button onclick="validateTicket()"
+                    class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg transition-colors">
+                    検証する
+                </button>
+            </div>
+
+            <div id="validation-result" class="hidden"></div>
+        </div>
+
+        <!-- 統計タブ -->
+        <div id="content-stats" class="tab-content hidden">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-2xl font-bold mb-4">チケット統計</h2>
+                <button onclick="loadStats()"
+                    class="mb-4 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-lg transition-colors">
+                    更新
+                </button>
+                <div id="stats-display" class="grid grid-cols-3 gap-4"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let videoStream = null;
+        let scanningActive = false;
+
+        function showTab(tabName) {
+            // すべてのタブコンテンツを非表示
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+
+            // すべてのタブボタンのスタイルをリセット
+            document.querySelectorAll('[id^="tab-"]').forEach(btn => {
+                btn.classList.remove('bg-blue-500', 'text-white');
+                btn.classList.add('hover:bg-gray-100');
+            });
+
+            // 選択されたタブを表示
+            document.getElementById(`content-${tabName}`).classList.remove('hidden');
+            const btn = document.getElementById(`tab-${tabName}`);
+            btn.classList.add('bg-blue-500', 'text-white');
+            btn.classList.remove('hover:bg-gray-100');
+
+            // カメラを停止
+            if (tabName !== 'validate') {
+                stopCamera();
+            }
+
+            // 統計タブの場合は自動で読み込み
+            if (tabName === 'stats') {
+                loadStats();
+            }
+        }
+
+        async function createTickets() {
+            const eventName = document.getElementById('event-name').value || 'イベント';
+            const ticketCount = parseInt(document.getElementById('ticket-count').value) || 1;
+
+            try {
+                const response = await fetch('/api/create-ticket', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ event_name: eventName, ticket_count: ticketCount })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    displayTickets(data.tickets);
+                } else {
+                    alert('エラー: ' + data.error);
+                }
+            } catch (error) {
+                alert('通信エラー: ' + error.message);
+            }
+        }
+
+        function displayTickets(tickets) {
+            const container = document.getElementById('tickets-display');
+            container.innerHTML = '';
+
+            tickets.forEach(ticket => {
+                const ticketDiv = document.createElement('div');
+                ticketDiv.className = 'bg-white rounded-lg shadow-md p-6';
+                ticketDiv.innerHTML = `
+                    <h3 class="text-xl font-bold mb-2">${ticket.event_name}</h3>
+                    <p class="text-gray-600 text-sm mb-4">ID: ${ticket.ticket_id}</p>
+                    <img src="${ticket.qr_code}" alt="QR Code" class="w-64 h-64 mx-auto mb-4">
+                    <button onclick="downloadQR('${ticket.qr_code}', '${ticket.ticket_id}')"
+                        class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                        QRコードをダウンロード
+                    </button>
+                `;
+                container.appendChild(ticketDiv);
+            });
+        }
+
+        function downloadQR(dataUrl, ticketId) {
+            const a = document.createElement('a');
+            a.href = dataUrl;
+            a.download = `ticket-${ticketId}.png`;
+            a.click();
+        }
+
+        async function validateTicket(ticketId = null) {
+            if (!ticketId) {
+                ticketId = document.getElementById('ticket-id-input').value.trim();
+            }
+
+            if (!ticketId) {
+                alert('チケットIDを入力してください');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/validate-ticket', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ticket_id: ticketId })
+                });
+
+                const data = await response.json();
+                displayValidationResult(data);
+            } catch (error) {
+                alert('通信エラー: ' + error.message);
+            }
+        }
+
+        function displayValidationResult(data) {
+            const container = document.getElementById('validation-result');
+            container.classList.remove('hidden');
+
+            if (data.valid) {
+                container.innerHTML = `
+                    <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-6 rounded-lg">
+                        <h3 class="text-2xl font-bold mb-2">✓ 有効なチケット</h3>
+                        <p class="text-lg">イベント: ${data.ticket.event_name}</p>
+                        <p class="text-sm mt-2">作成日時: ${new Date(data.ticket.created_at).toLocaleString('ja-JP')}</p>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = `
+                    <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-6 rounded-lg">
+                        <h3 class="text-2xl font-bold mb-2">✗ 無効なチケット</h3>
+                        <p class="text-lg">${data.error}</p>
+                        ${data.used_at ? `<p class="text-sm mt-2">使用日時: ${new Date(data.used_at).toLocaleString('ja-JP')}</p>` : ''}
+                    </div>
+                `;
+            }
+        }
+
+        async function startCamera() {
+            try {
+                videoStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment' }
+                });
+
+                const video = document.getElementById('video');
+                video.srcObject = videoStream;
+
+                document.getElementById('camera-container').classList.remove('hidden');
+                document.getElementById('start-camera-btn').classList.add('hidden');
+
+                scanningActive = true;
+                scanQRCode();
+            } catch (error) {
+                alert('カメラアクセスエラー: ' + error.message);
+            }
+        }
+
+        function stopCamera() {
+            scanningActive = false;
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => track.stop());
+                videoStream = null;
+            }
+            document.getElementById('camera-container').classList.add('hidden');
+            document.getElementById('start-camera-btn').classList.remove('hidden');
+        }
+
+        function scanQRCode() {
+            if (!scanningActive) return;
+
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
+            const context = canvas.getContext('2d');
+
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                const code = jsQR(imageData.data, imageData.width, imageData.height);
+
+                if (code) {
+                    try {
+                        const data = JSON.parse(code.data);
+                        if (data.ticket_id) {
+                            stopCamera();
+                            validateTicket(data.ticket_id);
+                            return;
+                        }
+                    } catch (e) {
+                        // JSONパースエラーは無視
+                    }
+                }
+            }
+
+            requestAnimationFrame(scanQRCode);
+        }
+
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/stats');
+                const data = await response.json();
+
+                if (data.success) {
+                    const container = document.getElementById('stats-display');
+                    container.innerHTML = `
+                        <div class="bg-blue-100 p-6 rounded-lg text-center">
+                            <p class="text-3xl font-bold text-blue-600">${data.total}</p>
+                            <p class="text-gray-700">総チケット数</p>
+                        </div>
+                        <div class="bg-green-100 p-6 rounded-lg text-center">
+                            <p class="text-3xl font-bold text-green-600">${data.used}</p>
+                            <p class="text-gray-700">使用済み</p>
+                        </div>
+                        <div class="bg-yellow-100 p-6 rounded-lg text-center">
+                            <p class="text-3xl font-bold text-yellow-600">${data.unused}</p>
+                            <p class="text-gray-700">未使用</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                alert('統計読み込みエラー: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>
