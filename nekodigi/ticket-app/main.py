@@ -1,32 +1,16 @@
 import os
 import json
 import uuid
-import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import qrcode
 import io
 import base64
-from firebase_admin import credentials, initialize_app, db
-import firebase_admin
+import requests
 
-# Firebase初期化
-if not firebase_admin._apps:
-    cred = credentials.Certificate({
-        "type": "service_account",
-        "project_id": "sandbox-35d1d",
-        "private_key_id": "dummy",
-        "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDummy\n-----END PRIVATE KEY-----\n",
-        "client_email": "firebase-adminsdk@sandbox-35d1d.iam.gserviceaccount.com",
-        "client_id": "dummy",
-        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-        "token_uri": "https://oauth2.googleapis.com/token"
-    })
-
-    # Admin SDKなしでRealtimeデータベースを使用
-    # Firebaseの設定
-    DATABASE_URL = "https://sandbox-35d1d-default-rtdb.firebaseio.com"
+# Firebase Realtime Database URL
+DATABASE_URL = "https://sandbox-35d1d-default-rtdb.firebaseio.com"
 
 app = Flask(__name__)
 CORS(app)
@@ -34,9 +18,6 @@ CORS(app)
 DEVELOPER_ID = os.environ.get('DEVELOPER_ID', 'default_dev')
 APP_ID = os.environ.get('APP_ID', 'default_app')
 BASE_PATH = f"pracClass/{DEVELOPER_ID}/apps/{APP_ID}"
-
-# Firebaseクライアントライブラリを使わず、REST APIを直接使用
-import requests
 
 def get_firebase_ref(path):
     """Firebaseパスの完全URLを取得"""
