@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>モ〜電卓 🐄</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap');
+
+        body {
+            font-family: 'Nunito', sans-serif;
+        }
+
+        .cow-spot {
+            background: radial-gradient(circle, #000 40%, transparent 40%);
+            background-size: 40px 40px;
+            background-position: 0 0, 20px 20px;
+        }
+
+        .btn-hover:hover {
+            transform: scale(1.05);
+            transition: transform 0.1s;
+        }
+
+        .btn-hover:active {
+            transform: scale(0.95);
+        }
+
+        @keyframes moo {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-5deg); }
+            75% { transform: rotate(5deg); }
+        }
+
+        .moo-animation {
+            animation: moo 0.5s ease-in-out;
+        }
+
+        .cow-bell {
+            position: relative;
+        }
+
+        .cow-bell::after {
+            content: '🔔';
+            position: absolute;
+            top: -20px;
+            right: 10px;
+            font-size: 1.5rem;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-green-100 via-yellow-50 to-green-100 min-h-screen flex items-center justify-center p-4">
+    <div class="max-w-md w-full">
+        <!-- Cow Header -->
+        <div class="text-center mb-6">
+            <div class="text-6xl mb-2 inline-block moo-animation" id="cowEmoji">🐄</div>
+            <h1 class="text-4xl font-black text-gray-800 mb-2">モ〜電卓</h1>
+            <p class="text-gray-600 text-sm">牛さんと一緒に計算しましょう！</p>
+        </div>
+
+        <!-- Calculator -->
+        <div class="bg-white rounded-3xl shadow-2xl p-6 border-4 border-black relative cow-bell">
+            <!-- Cow spots decoration -->
+            <div class="absolute top-4 right-4 w-12 h-12 bg-black rounded-full opacity-10"></div>
+            <div class="absolute top-12 right-16 w-8 h-8 bg-black rounded-full opacity-10"></div>
+            <div class="absolute bottom-16 left-6 w-10 h-10 bg-black rounded-full opacity-10"></div>
+
+            <!-- Display -->
+            <div class="bg-gradient-to-br from-yellow-100 to-yellow-50 rounded-2xl p-6 mb-6 border-3 border-gray-800 relative overflow-hidden">
+                <div class="absolute top-2 left-2 text-2xl">🌾</div>
+                <div class="absolute bottom-2 right-2 text-2xl">🌾</div>
+                <div id="display" class="text-right text-4xl font-bold text-gray-800 min-h-[3rem] break-all">0</div>
+                <div id="expression" class="text-right text-sm text-gray-500 min-h-[1.5rem] mt-2"></div>
+            </div>
+
+            <!-- Buttons -->
+            <div class="grid grid-cols-4 gap-3">
+                <!-- Row 1 -->
+                <button onclick="clearAll()" class="col-span-2 bg-red-500 hover:bg-red-600 text-white text-xl font-bold py-4 rounded-xl btn-hover shadow-lg">
+                    モ〜クリア 🐄
+                </button>
+                <button onclick="deleteLast()" class="bg-orange-400 hover:bg-orange-500 text-white text-xl font-bold py-4 rounded-xl btn-hover shadow-lg">
+                    ⌫
+                </button>
+                <button onclick="appendOperator('/')" class="bg-purple-400 hover:bg-purple-500 text-white text-2xl font-bold py-4 rounded-xl btn-hover shadow-lg">
+                    ÷
+                </button>
+
+                <!-- Row 2 -->
+                <button onclick="appendNumber('7')" class="bg-white hover:bg-gray-50 text-gray-800 text-2xl font-bold py-4 rounded-xl btn-hover shadow-md border-2 border-gray-300">
+                    7
+                </button>
+                <button onclick="appendNumber('8')" class="bg-white hover:bg-gray-50 text-gray-800 text-2xl font-bold py-4 rounded-xl btn-hover shadow-md border-2 border-gray-300">
+                    8
+                </button>
+                <button onclick="appendNumber('9')" class="bg-white hover:bg-gray-50 text-gray-800 text-2xl font-bold py-4 rounded-xl btn-hover shadow-md border-2 border-gray-300">
+                    9
+                </button>
+                <button onclick="appendOperator('*')" class="bg-purple-400 hover:bg-purple-500 text-white text-2xl font-bold py-4 rounded-xl btn-hover shadow-lg">
+                    ×
+                </button>
+
+                <!-- Row 3 -->
+                <button onclick="appendNumber('4')" class="bg-white hover:bg-gray-50 text-gray-800 text-2xl font-bold py-4 rounded-xl btn-hover shadow-md border-2 border-gray-300">
+                    4
+                </button>
+                <button onclick="appendNumber('5')" class="bg-white hover:bg-gray-50 text-gray-800 text-2xl font-bold py-4 rounded-xl btn-hover shadow-md border-2 border-gray-300">
+                    5
+                </button>
+                <button onclick="appendNumber('6')" class="bg-white hover:bg-gray-50 text-gray-800 text-2xl font-bold py-4 rounded-xl btn-hover shadow-md border-2 border-gray-300">
+                    6
+                </button>
+                <button onclick="appendOperator('-')" class="bg-purple-400 hover:bg-purple-500 text-white text-2xl font-bold py-4 rounded-xl btn-hover shadow-lg">
+                    −
+                </button>
+
+                <!-- Row 4 -->
+                <button onclick="appendNumber('1')" class="bg-white hover:bg-gray-50 text-gray-800 text-2xl font-bold py-4 rounded-xl btn-hover shadow-md border-2 border-gray-300">
+                    1
+                </button>
+                <button onclick="appendNumber('2')" class="bg-white hover:bg-gray-50 text-gray-800 text-2xl font-bold py-4 rounded-xl btn-hover shadow-md border-2 border-gray-300">
+                    2
+                </button>
+                <button onclick="appendNumber('3')" class="bg-white hover:bg-gray-50 text-gray-800 text-2xl font-bold py-4 rounded-xl btn-hover shadow-md border-2 border-gray-300">
+                    3
+                </button>
+                <button onclick="appendOperator('+')" class="bg-purple-400 hover:bg-purple-500 text-white text-2xl font-bold py-4 rounded-xl btn-hover shadow-lg">
+                    +
+                </button>
+
+                <!-- Row 5 -->
+                <button onclick="appendNumber('0')" class="col-span-2 bg-white hover:bg-gray-50 text-gray-800 text-2xl font-bold py-4 rounded-xl btn-hover shadow-md border-2 border-gray-300">
+                    0
+                </button>
+                <button onclick="appendNumber('.')" class="bg-white hover:bg-gray-50 text-gray-800 text-2xl font-bold py-4 rounded-xl btn-hover shadow-md border-2 border-gray-300">
+                    .
+                </button>
+                <button onclick="calculate()" class="bg-green-500 hover:bg-green-600 text-white text-2xl font-bold py-4 rounded-xl btn-hover shadow-lg">
+                    =
+                </button>
+            </div>
+
+            <!-- Cow Message -->
+            <div class="mt-6 text-center">
+                <p id="cowMessage" class="text-gray-600 text-sm italic">モ〜！計算してね 🐄</p>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center mt-6 text-gray-600 text-xs">
+            <p>🥛 牛乳を飲んで元気に計算！ 🥛</p>
+        </div>
+    </div>
+
+    <script>
+        let currentInput = '0';
+        let expression = '';
+        let lastResult = null;
+        let shouldResetInput = false;
+
+        const cowMessages = [
+            'モ〜！すごいね！ 🐄',
+            'モモモ〜ン！完璧！ 🐄✨',
+            '牛ちからで計算完了！ 💪🐄',
+            'モ〜！天才だね！ 🌟',
+            '草！間違いない！ 🌾',
+            'モ〜っと計算しよう！ 🐄',
+            'ミルクみたいに滑らか！ 🥛',
+            'カウントもバッチリ！ 🐄📊'
+        ];
+
+        function updateDisplay() {
+            document.getElementById('display').textContent = currentInput;
+            document.getElementById('expression').textContent = expression;
+        }
+
+        function appendNumber(num) {
+            if (shouldResetInput) {
+                currentInput = num;
+                shouldResetInput = false;
+            } else {
+                if (currentInput === '0' && num !== '.') {
+                    currentInput = num;
+                } else if (num === '.' && currentInput.includes('.')) {
+                    return;
+                } else {
+                    currentInput += num;
+                }
+            }
+            updateDisplay();
+        }
+
+        function appendOperator(op) {
+            if (expression && !shouldResetInput) {
+                calculate();
+            }
+
+            expression = currentInput + ' ' + getOperatorSymbol(op) + ' ';
+            shouldResetInput = true;
+            updateDisplay();
+        }
+
+        function getOperatorSymbol(op) {
+            const symbols = {
+                '+': '+',
+                '-': '−',
+                '*': '×',
+                '/': '÷'
+            };
+            return symbols[op] || op;
+        }
+
+        function calculate() {
+            if (!expression) return;
+
+            try {
+                const fullExpression = expression.replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-') + currentInput;
+                const result = eval(fullExpression);
+
+                expression = '';
+                currentInput = String(result);
+                shouldResetInput = true;
+                lastResult = result;
+
+                updateDisplay();
+                playMooAnimation();
+                showRandomCowMessage();
+            } catch (error) {
+                currentInput = 'エラー モ〜';
+                expression = '';
+                shouldResetInput = true;
+                updateDisplay();
+                document.getElementById('cowMessage').textContent = 'モ〜！計算できないよ 😢';
+            }
+        }
+
+        function clearAll() {
+            currentInput = '0';
+            expression = '';
+            lastResult = null;
+            shouldResetInput = false;
+            updateDisplay();
+            document.getElementById('cowMessage').textContent = 'モ〜！リセットしたよ 🐄';
+        }
+
+        function deleteLast() {
+            if (currentInput.length > 1) {
+                currentInput = currentInput.slice(0, -1);
+            } else {
+                currentInput = '0';
+            }
+            updateDisplay();
+        }
+
+        function playMooAnimation() {
+            const cowEmoji = document.getElementById('cowEmoji');
+            cowEmoji.classList.remove('moo-animation');
+            void cowEmoji.offsetWidth; // Trigger reflow
+            cowEmoji.classList.add('moo-animation');
+        }
+
+        function showRandomCowMessage() {
+            const randomMessage = cowMessages[Math.floor(Math.random() * cowMessages.length)];
+            document.getElementById('cowMessage').textContent = randomMessage;
+        }
+
+        // Keyboard support
+        document.addEventListener('keydown', function(event) {
+            if (event.key >= '0' && event.key <= '9') {
+                appendNumber(event.key);
+            } else if (event.key === '.') {
+                appendNumber('.');
+            } else if (event.key === '+' || event.key === '-' || event.key === '*' || event.key === '/') {
+                appendOperator(event.key);
+            } else if (event.key === 'Enter' || event.key === '=') {
+                calculate();
+            } else if (event.key === 'Escape') {
+                clearAll();
+            } else if (event.key === 'Backspace') {
+                deleteLast();
+            }
+        });
+
+        // Initialize
+        updateDisplay();
+    </script>
+</body>
+</html>
