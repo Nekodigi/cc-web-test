@@ -92,7 +92,7 @@
             const expression = display.value;
             if (!expression || /[+\-*/]$/.test(expression)) return;
 
-            fetch('/calculate', {
+            fetch('/api/calculate', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
