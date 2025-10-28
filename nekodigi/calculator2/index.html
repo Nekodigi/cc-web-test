@@ -7,87 +7,102 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen">
-    <div class="bg-white rounded-lg shadow-lg p-8 w-80">
-        <h1 class="text-2xl font-bold text-center mb-6 text-gray-800">電卓</h1>
+    <div class="bg-white rounded-lg shadow-lg p-6 w-80">
+        <h1 class="text-2xl font-bold text-center mb-6">電卓</h1>
         
-        <input 
-            type="text" 
-            id="display" 
-            class="w-full p-4 mb-4 text-right text-2xl font-mono bg-gray-50 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" 
-            value="0" 
-            readonly
-        >
-        
+        <div class="bg-gray-800 text-white text-right p-4 rounded mb-4 text-4xl font-mono overflow-hidden">
+            <div id="display">0</div>
+        </div>
+
         <div class="grid grid-cols-4 gap-2">
-            <button onclick="clearDisplay()" class="col-span-2 bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded-lg">AC</button>
-            <button onclick="appendOperator('/')" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 rounded-lg">÷</button>
-            <button onclick="appendOperator('*')" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 rounded-lg">×</button>
-            
-            <button onclick="appendNumber('7')" class="bg-gray-200 hover:bg-gray-300 font-bold py-3 rounded-lg">7</button>
-            <button onclick="appendNumber('8')" class="bg-gray-200 hover:bg-gray-300 font-bold py-3 rounded-lg">8</button>
-            <button onclick="appendNumber('9')" class="bg-gray-200 hover:bg-gray-300 font-bold py-3 rounded-lg">9</button>
-            <button onclick="appendOperator('-')" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 rounded-lg">−</button>
-            
-            <button onclick="appendNumber('4')" class="bg-gray-200 hover:bg-gray-300 font-bold py-3 rounded-lg">4</button>
-            <button onclick="appendNumber('5')" class="bg-gray-200 hover:bg-gray-300 font-bold py-3 rounded-lg">5</button>
-            <button onclick="appendNumber('6')" class="bg-gray-200 hover:bg-gray-300 font-bold py-3 rounded-lg">6</button>
-            <button onclick="appendOperator('+')" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 rounded-lg">+</button>
-            
-            <button onclick="appendNumber('1')" class="bg-gray-200 hover:bg-gray-300 font-bold py-3 rounded-lg">1</button>
-            <button onclick="appendNumber('2')" class="bg-gray-200 hover:bg-gray-300 font-bold py-3 rounded-lg">2</button>
-            <button onclick="appendNumber('3')" class="bg-gray-200 hover:bg-gray-300 font-bold py-3 rounded-lg">3</button>
-            <button onclick="deleteLast()" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 rounded-lg">←</button>
-            
-            <button onclick="appendNumber('0')" class="col-span-2 bg-gray-200 hover:bg-gray-300 font-bold py-3 rounded-lg">0</button>
-            <button onclick="appendNumber('.')" class="bg-gray-200 hover:bg-gray-300 font-bold py-3 rounded-lg">.</button>
-            <button onclick="calculate()" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-lg">=</button>
+            <!-- Row 1 -->
+            <button onclick="clearDisplay()" class="col-span-2 bg-red-500 hover:bg-red-600 text-white font-bold py-4 rounded">C</button>
+            <button onclick="appendOperator('/')" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 rounded">÷</button>
+            <button onclick="appendOperator('*')" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 rounded">×</button>
+
+            <!-- Row 2 -->
+            <button onclick="appendNumber('7')" class="bg-gray-300 hover:bg-gray-400 text-black font-bold py-4 rounded">7</button>
+            <button onclick="appendNumber('8')" class="bg-gray-300 hover:bg-gray-400 text-black font-bold py-4 rounded">8</button>
+            <button onclick="appendNumber('9')" class="bg-gray-300 hover:bg-gray-400 text-black font-bold py-4 rounded">9</button>
+            <button onclick="appendOperator('-')" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 rounded">−</button>
+
+            <!-- Row 3 -->
+            <button onclick="appendNumber('4')" class="bg-gray-300 hover:bg-gray-400 text-black font-bold py-4 rounded">4</button>
+            <button onclick="appendNumber('5')" class="bg-gray-300 hover:bg-gray-400 text-black font-bold py-4 rounded">5</button>
+            <button onclick="appendNumber('6')" class="bg-gray-300 hover:bg-gray-400 text-black font-bold py-4 rounded">6</button>
+            <button onclick="appendOperator('+')" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 rounded">+</button>
+
+            <!-- Row 4 -->
+            <button onclick="appendNumber('1')" class="bg-gray-300 hover:bg-gray-400 text-black font-bold py-4 rounded">1</button>
+            <button onclick="appendNumber('2')" class="bg-gray-300 hover:bg-gray-400 text-black font-bold py-4 rounded">2</button>
+            <button onclick="appendNumber('3')" class="bg-gray-300 hover:bg-gray-400 text-black font-bold py-4 rounded">3</button>
+            <button onclick="calculate()" class="bg-green-500 hover:bg-green-600 text-white font-bold py-4 rounded row-span-2">=</button>
+
+            <!-- Row 5 -->
+            <button onclick="appendNumber('0')" class="col-span-2 bg-gray-300 hover:bg-gray-400 text-black font-bold py-4 rounded">0</button>
+            <button onclick="appendNumber('.')" class="bg-gray-300 hover:bg-gray-400 text-black font-bold py-4 rounded">.</button>
         </div>
     </div>
 
     <script>
         let display = document.getElementById('display');
-        let expression = '';
+        let currentValue = '0';
+        let previousValue = '';
+        let operator = '';
+        let shouldResetDisplay = false;
 
         function appendNumber(num) {
-            if (display.value === '0' && num !== '.') {
-                display.value = num;
-            } else if (num === '.' && display.value.includes('.')) {
-                return;
+            if (shouldResetDisplay) {
+                currentValue = num;
+                shouldResetDisplay = false;
             } else {
-                display.value += num;
+                if (currentValue === '0' && num !== '.') {
+                    currentValue = num;
+                } else if (num === '.' && currentValue.includes('.')) {
+                    return;
+                } else {
+                    currentValue += num;
+                }
             }
-            expression = display.value;
+            updateDisplay();
         }
 
         function appendOperator(op) {
-            if (expression === '' || /[+\-*/]$/.test(expression)) {
-                return;
+            if (operator && !shouldResetDisplay) {
+                calculate();
             }
-            expression += op;
-            display.value += op;
+            previousValue = currentValue;
+            operator = op;
+            shouldResetDisplay = true;
         }
 
         function calculate() {
+            if (!operator || !previousValue) return;
+
             try {
-                let result = eval(expression);
-                display.value = result;
-                expression = result.toString();
+                const expression = previousValue + operator + currentValue;
+                const result = eval(expression);
+                currentValue = String(result);
+                operator = '';
+                previousValue = '';
+                shouldResetDisplay = true;
+                updateDisplay();
             } catch (e) {
-                display.value = 'エラー';
-                expression = '';
+                currentValue = 'エラー';
+                updateDisplay();
             }
         }
 
         function clearDisplay() {
-            display.value = '0';
-            expression = '';
+            currentValue = '0';
+            previousValue = '';
+            operator = '';
+            shouldResetDisplay = false;
+            updateDisplay();
         }
 
-        function deleteLast() {
-            if (expression.length > 0) {
-                expression = expression.slice(0, -1);
-                display.value = expression || '0';
-            }
+        function updateDisplay() {
+            display.textContent = currentValue;
         }
     </script>
 </body>
