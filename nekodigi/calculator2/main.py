@@ -1,33 +1,33 @@
-import functions_framework
+import os
 from flask import Flask, render_template, request, jsonify
+from flask_cors import CORS
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='.', static_folder='.')
+CORS(app)
 
-@functions_framework.http
-def main(request):
-    request.environ['SCRIPT_NAME'] = ''
+@app.route('/')
+def index():
+    return render_template('index.html')
 
-    if request.path == '/' and request.method == 'GET':
-        return render_template('index.html')
+@app.route('/calculate', methods=['POST'])
+def calculate():
+    try:
+        data = request.json
+        expression = data.get('expression', '')
 
-    if request.path == '/api/calculate' and request.method == 'POST':
-        try:
-            data = request.get_json()
-            expression = data.get('expression', '').strip()
+        # セキュリティ: 数字、演算子、括弧のみを許可
+        allowed_chars = set('0123456789+-*/(). ')
+        if not all(c in allowed_chars for c in expression):
+            return jsonify({'error': '無効な入力'}), 400
 
-            if not expression:
-                return jsonify({'error': 'Expression is required'}), 400
+        # eval を使用して計算
+        result = eval(expression)
+        return jsonify({'result': result})
+    except ZeroDivisionError:
+        return jsonify({'error': '0で除算することはできません'}), 400
+    except Exception as e:
+        return jsonify({'error': '計算エラー'}), 400
 
-            # Simple evaluation with basic security (only numbers and operators)
-            allowed_chars = set('0123456789+-*/.() ')
-            if not all(c in allowed_chars for c in expression):
-                return jsonify({'error': 'Invalid characters'}), 400
-
-            result = eval(expression)
-            return jsonify({'result': result})
-        except ZeroDivisionError:
-            return jsonify({'error': 'Division by zero'}), 400
-        except Exception as e:
-            return jsonify({'error': str(e)}), 400
-
-    return 'Not Found', 404
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 3000))
+    app.run(host='0.0.0.0', port=port, debug=False)

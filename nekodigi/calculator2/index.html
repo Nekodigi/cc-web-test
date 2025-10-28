@@ -6,44 +6,47 @@
     <title>電卓</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm">
-        <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">電卓</h1>
+<body class="bg-gray-900 flex items-center justify-center min-h-screen">
+    <div class="bg-gray-800 p-8 rounded-lg shadow-2xl w-80">
+        <h1 class="text-white text-2xl font-bold mb-6 text-center">電卓</h1>
         
-        <div class="mb-6">
+        <div class="bg-gray-700 p-4 rounded mb-4">
             <input 
                 type="text" 
                 id="display" 
-                class="w-full bg-gray-100 border-2 border-gray-300 rounded-lg p-4 text-right text-3xl font-mono font-bold text-gray-800 focus:outline-none focus:border-indigo-500" 
-                placeholder="0" 
+                class="w-full bg-gray-600 text-white text-right text-3xl font-bold p-4 rounded focus:outline-none"
                 readonly
-            />
+                value="0"
+            >
         </div>
 
-        <div class="grid grid-cols-4 gap-3 mb-4">
-            <button onclick="appendNumber('7')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-4 px-6 rounded-lg text-xl">7</button>
-            <button onclick="appendNumber('8')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-4 px-6 rounded-lg text-xl">8</button>
-            <button onclick="appendNumber('9')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-4 px-6 rounded-lg text-xl">9</button>
-            <button onclick="appendOperator('/')" class="bg-red-500 hover:bg-red-600 text-white font-bold py-4 px-6 rounded-lg text-xl">÷</button>
+        <div class="grid grid-cols-4 gap-2">
+            <!-- 第1行 -->
+            <button onclick="clearDisplay()" class="col-span-3 bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded">AC</button>
+            <button onclick="appendOperator('/')" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 rounded">÷</button>
 
-            <button onclick="appendNumber('4')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-4 px-6 rounded-lg text-xl">4</button>
-            <button onclick="appendNumber('5')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-4 px-6 rounded-lg text-xl">5</button>
-            <button onclick="appendNumber('6')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-4 px-6 rounded-lg text-xl">6</button>
-            <button onclick="appendOperator('*')" class="bg-red-500 hover:bg-red-600 text-white font-bold py-4 px-6 rounded-lg text-xl">×</button>
+            <!-- 第2行 -->
+            <button onclick="appendNumber('7')" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-4 rounded">7</button>
+            <button onclick="appendNumber('8')" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-4 rounded">8</button>
+            <button onclick="appendNumber('9')" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-4 rounded">9</button>
+            <button onclick="appendOperator('*')" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 rounded">×</button>
 
-            <button onclick="appendNumber('1')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-4 px-6 rounded-lg text-xl">1</button>
-            <button onclick="appendNumber('2')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-4 px-6 rounded-lg text-xl">2</button>
-            <button onclick="appendNumber('3')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-4 px-6 rounded-lg text-xl">3</button>
-            <button onclick="appendOperator('-')" class="bg-red-500 hover:bg-red-600 text-white font-bold py-4 px-6 rounded-lg text-xl">−</button>
+            <!-- 第3行 -->
+            <button onclick="appendNumber('4')" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-4 rounded">4</button>
+            <button onclick="appendNumber('5')" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-4 rounded">5</button>
+            <button onclick="appendNumber('6')" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-4 rounded">6</button>
+            <button onclick="appendOperator('-')" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 rounded">−</button>
 
-            <button onclick="appendNumber('0')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-4 px-6 rounded-lg text-xl col-span-2">0</button>
-            <button onclick="appendNumber('.')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-4 px-6 rounded-lg text-xl">.</button>
-            <button onclick="appendOperator('+')" class="bg-red-500 hover:bg-red-600 text-white font-bold py-4 px-6 rounded-lg text-xl">+</button>
-        </div>
+            <!-- 第4行 -->
+            <button onclick="appendNumber('1')" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-4 rounded">1</button>
+            <button onclick="appendNumber('2')" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-4 rounded">2</button>
+            <button onclick="appendNumber('3')" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-4 rounded">3</button>
+            <button onclick="appendOperator('+')" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 rounded">+</button>
 
-        <div class="grid grid-cols-2 gap-3">
-            <button onclick="clearDisplay()" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-4 px-6 rounded-lg text-xl">C</button>
-            <button onclick="calculate()" class="bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-6 rounded-lg text-xl">=</button>
+            <!-- 第5行 -->
+            <button onclick="appendNumber('0')" class="col-span-2 bg-gray-600 hover:bg-gray-700 text-white font-bold py-4 rounded">0</button>
+            <button onclick="appendNumber('.')" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-4 rounded">.</button>
+            <button onclick="calculate()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded">=</button>
         </div>
     </div>
 
@@ -51,20 +54,24 @@
         const display = document.getElementById('display');
         let expression = '';
 
+        function updateDisplay() {
+            display.value = expression || '0';
+        }
+
         function appendNumber(num) {
             expression += num;
             updateDisplay();
         }
 
         function appendOperator(op) {
-            if (expression && !expression.endsWith(' ')) {
-                expression += ' ' + op + ' ';
+            if (expression && !isOperator(expression.slice(-1))) {
+                expression += op;
                 updateDisplay();
             }
         }
 
-        function updateDisplay() {
-            display.value = expression || '0';
+        function isOperator(char) {
+            return ['+', '-', '*', '/', '.'].includes(char);
         }
 
         function clearDisplay() {
@@ -72,36 +79,36 @@
             updateDisplay();
         }
 
-        function calculate() {
-            if (!expression.trim()) return;
+        async function calculate() {
+            if (!expression) return;
 
-            fetch('/api/calculate', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ expression: expression })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    display.value = 'エラー: ' + data.error;
-                } else {
+            try {
+                const response = await fetch('/calculate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ expression })
+                });
+
+                const data = await response.json();
+                if (response.ok) {
                     expression = String(data.result);
                     updateDisplay();
+                } else {
+                    display.value = data.error;
+                    expression = '';
                 }
-            })
-            .catch(err => {
-                display.value = 'エラー: ' + err.message;
-            });
+            } catch (error) {
+                display.value = 'エラー';
+                expression = '';
+            }
         }
 
-        // キーボード対応
-        document.addEventListener('keydown', (e) => {
-            if (/[0-9.]/.test(e.key)) appendNumber(e.key);
-            else if (['+', '-', '*', '/'].includes(e.key)) appendOperator(e.key);
-            else if (e.key === 'Enter') calculate();
-            else if (e.key === 'Backspace') {
-                expression = expression.slice(0, -1);
-                updateDisplay();
+        // Enterキーで計算実行
+        document.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                calculate();
             }
         });
 
