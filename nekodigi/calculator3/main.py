@@ -1,17 +1,30 @@
 import functions_framework
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, request, jsonify
 import os
 from openai import OpenAI
 
-app = Flask(__name__, template_folder='.', static_folder='.')
+app = Flask(__name__)
 
 openai_client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 DEVELOPER_ID = os.environ.get("DEVELOPER_ID")
 APP_ID = os.environ.get("APP_ID")
 
+# HTML コンテンツをキャッシュ
+HTML_CONTENT = None
+
+def load_html():
+    global HTML_CONTENT
+    if HTML_CONTENT is None:
+        try:
+            with open('index.html', 'r', encoding='utf-8') as f:
+                HTML_CONTENT = f.read()
+        except:
+            HTML_CONTENT = ""
+    return HTML_CONTENT
+
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return load_html()
 
 @app.route('/api/chat', methods=['POST'])
 def chat():
