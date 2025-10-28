@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>電卓</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+    <div class="bg-gray-800 p-6 rounded-2xl shadow-2xl w-80">
+        <div class="bg-gray-900 rounded-lg p-4 mb-4">
+            <div class="text-right text-gray-400 text-sm h-6" id="expression"></div>
+            <div class="text-right text-white text-4xl font-light mt-2" id="display">0</div>
+        </div>
+
+        <div class="grid grid-cols-4 gap-3">
+            <button onclick="clearAll()" class="bg-red-500 hover:bg-red-600 text-white font-semibold py-4 rounded-lg col-span-2">AC</button>
+            <button onclick="deleteLast()" class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-4 rounded-lg">DEL</button>
+            <button onclick="appendOperator('/')" class="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-4 rounded-lg text-2xl">÷</button>
+
+            <button onclick="appendNumber('7')" class="bg-gray-700 hover:bg-gray-600 text-white font-semibold py-4 rounded-lg text-xl">7</button>
+            <button onclick="appendNumber('8')" class="bg-gray-700 hover:bg-gray-600 text-white font-semibold py-4 rounded-lg text-xl">8</button>
+            <button onclick="appendNumber('9')" class="bg-gray-700 hover:bg-gray-600 text-white font-semibold py-4 rounded-lg text-xl">9</button>
+            <button onclick="appendOperator('*')" class="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-4 rounded-lg text-2xl">×</button>
+
+            <button onclick="appendNumber('4')" class="bg-gray-700 hover:bg-gray-600 text-white font-semibold py-4 rounded-lg text-xl">4</button>
+            <button onclick="appendNumber('5')" class="bg-gray-700 hover:bg-gray-600 text-white font-semibold py-4 rounded-lg text-xl">5</button>
+            <button onclick="appendNumber('6')" class="bg-gray-700 hover:bg-gray-600 text-white font-semibold py-4 rounded-lg text-xl">6</button>
+            <button onclick="appendOperator('-')" class="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-4 rounded-lg text-2xl">−</button>
+
+            <button onclick="appendNumber('1')" class="bg-gray-700 hover:bg-gray-600 text-white font-semibold py-4 rounded-lg text-xl">1</button>
+            <button onclick="appendNumber('2')" class="bg-gray-700 hover:bg-gray-600 text-white font-semibold py-4 rounded-lg text-xl">2</button>
+            <button onclick="appendNumber('3')" class="bg-gray-700 hover:bg-gray-600 text-white font-semibold py-4 rounded-lg text-xl">3</button>
+            <button onclick="appendOperator('+')" class="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-4 rounded-lg text-2xl">+</button>
+
+            <button onclick="appendNumber('0')" class="bg-gray-700 hover:bg-gray-600 text-white font-semibold py-4 rounded-lg text-xl col-span-2">0</button>
+            <button onclick="appendNumber('.')" class="bg-gray-700 hover:bg-gray-600 text-white font-semibold py-4 rounded-lg text-xl">.</button>
+            <button onclick="calculate()" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-4 rounded-lg text-2xl">=</button>
+        </div>
+    </div>
+
+    <script>
+        let currentInput = '0';
+        let expression = '';
+        let lastWasOperator = false;
+
+        function updateDisplay() {
+            document.getElementById('display').textContent = currentInput;
+            document.getElementById('expression').textContent = expression;
+        }
+
+        function appendNumber(num) {
+            if (currentInput === '0' && num !== '.') {
+                currentInput = num;
+            } else if (num === '.' && currentInput.includes('.')) {
+                return;
+            } else {
+                currentInput += num;
+            }
+            lastWasOperator = false;
+            updateDisplay();
+        }
+
+        function appendOperator(op) {
+            if (lastWasOperator) {
+                expression = expression.slice(0, -1) + op;
+            } else {
+                expression += currentInput + op;
+                currentInput = '0';
+            }
+            lastWasOperator = true;
+            updateDisplay();
+        }
+
+        function calculate() {
+            try {
+                const fullExpression = expression + currentInput;
+                const result = eval(fullExpression);
+                currentInput = String(result);
+                expression = '';
+                lastWasOperator = false;
+                updateDisplay();
+            } catch (e) {
+                currentInput = 'Error';
+                expression = '';
+                updateDisplay();
+            }
+        }
+
+        function clearAll() {
+            currentInput = '0';
+            expression = '';
+            lastWasOperator = false;
+            updateDisplay();
+        }
+
+        function deleteLast() {
+            if (currentInput.length > 1) {
+                currentInput = currentInput.slice(0, -1);
+            } else {
+                currentInput = '0';
+            }
+            updateDisplay();
+        }
+
+        updateDisplay();
+    </script>
+</body>
+</html>
