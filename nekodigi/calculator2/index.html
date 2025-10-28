@@ -5,63 +5,46 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>シンプル電卓</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        .btn-calc {
-            @apply w-full p-4 text-lg font-semibold rounded transition;
-        }
-        .btn-number {
-            @apply bg-gray-200 hover:bg-gray-300 active:bg-gray-400;
-        }
-        .btn-operator {
-            @apply bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white;
-        }
-        .btn-equals {
-            @apply bg-green-500 hover:bg-green-600 active:bg-green-700 text-white;
-        }
-        .btn-clear {
-            @apply bg-red-500 hover:bg-red-600 active:bg-red-700 text-white;
-        }
-    </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
-    <div class="bg-white rounded-lg shadow-lg p-6 w-80">
-        <h1 class="text-2xl font-bold text-center mb-6 text-gray-800">電卓</h1>
-        
-        <input 
-            type="text" 
-            id="display" 
-            readonly 
-            class="w-full p-4 text-right text-2xl border-2 border-gray-300 rounded mb-6 bg-gray-50 font-mono"
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center min-h-screen">
+    <div class="bg-white rounded-2xl shadow-2xl p-8 w-96">
+        <h1 class="text-3xl font-bold text-center mb-8 text-gray-800">電卓</h1>
+
+        <input
+            type="text"
+            id="display"
+            readonly
+            class="w-full p-6 text-right text-4xl border-0 rounded-lg mb-8 bg-gray-50 font-mono font-semibold text-gray-900 shadow-sm"
             value="0"
         >
-        
-        <div class="grid grid-cols-4 gap-3">
+
+        <div class="grid grid-cols-4 gap-2">
             <!-- 第1行 -->
-            <button class="btn-calc btn-clear col-span-3" onclick="clearDisplay()">クリア</button>
-            <button class="btn-calc btn-operator" onclick="appendOperator('/')">÷</button>
-            
+            <button class="col-span-3 p-4 text-xl font-semibold rounded-lg bg-red-500 hover:bg-red-600 active:bg-red-700 text-white transition" onclick="clearDisplay()">クリア</button>
+            <button class="p-4 text-xl font-semibold rounded-lg bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white transition" onclick="appendOperator('/')">÷</button>
+
             <!-- 第2行 -->
-            <button class="btn-calc btn-number" onclick="appendNumber('7')">7</button>
-            <button class="btn-calc btn-number" onclick="appendNumber('8')">8</button>
-            <button class="btn-calc btn-number" onclick="appendNumber('9')">9</button>
-            <button class="btn-calc btn-operator" onclick="appendOperator('*')">×</button>
-            
+            <button class="p-4 text-xl font-semibold rounded-lg bg-gray-200 hover:bg-gray-300 active:bg-gray-400 transition" onclick="appendNumber('7')">7</button>
+            <button class="p-4 text-xl font-semibold rounded-lg bg-gray-200 hover:bg-gray-300 active:bg-gray-400 transition" onclick="appendNumber('8')">8</button>
+            <button class="p-4 text-xl font-semibold rounded-lg bg-gray-200 hover:bg-gray-300 active:bg-gray-400 transition" onclick="appendNumber('9')">9</button>
+            <button class="p-4 text-xl font-semibold rounded-lg bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white transition" onclick="appendOperator('*')">×</button>
+
             <!-- 第3行 -->
-            <button class="btn-calc btn-number" onclick="appendNumber('4')">4</button>
-            <button class="btn-calc btn-number" onclick="appendNumber('5')">5</button>
-            <button class="btn-calc btn-number" onclick="appendNumber('6')">6</button>
-            <button class="btn-calc btn-operator" onclick="appendOperator('-')">−</button>
-            
+            <button class="p-4 text-xl font-semibold rounded-lg bg-gray-200 hover:bg-gray-300 active:bg-gray-400 transition" onclick="appendNumber('4')">4</button>
+            <button class="p-4 text-xl font-semibold rounded-lg bg-gray-200 hover:bg-gray-300 active:bg-gray-400 transition" onclick="appendNumber('5')">5</button>
+            <button class="p-4 text-xl font-semibold rounded-lg bg-gray-200 hover:bg-gray-300 active:bg-gray-400 transition" onclick="appendNumber('6')">6</button>
+            <button class="p-4 text-xl font-semibold rounded-lg bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white transition" onclick="appendOperator('-')">−</button>
+
             <!-- 第4行 -->
-            <button class="btn-calc btn-number" onclick="appendNumber('1')">1</button>
-            <button class="btn-calc btn-number" onclick="appendNumber('2')">2</button>
-            <button class="btn-calc btn-number" onclick="appendNumber('3')">3</button>
-            <button class="btn-calc btn-operator" onclick="appendOperator('+')">+</button>
-            
+            <button class="p-4 text-xl font-semibold rounded-lg bg-gray-200 hover:bg-gray-300 active:bg-gray-400 transition" onclick="appendNumber('1')">1</button>
+            <button class="p-4 text-xl font-semibold rounded-lg bg-gray-200 hover:bg-gray-300 active:bg-gray-400 transition" onclick="appendNumber('2')">2</button>
+            <button class="p-4 text-xl font-semibold rounded-lg bg-gray-200 hover:bg-gray-300 active:bg-gray-400 transition" onclick="appendNumber('3')">3</button>
+            <button class="p-4 text-xl font-semibold rounded-lg bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white transition" onclick="appendOperator('+')">+</button>
+
             <!-- 第5行 -->
-            <button class="btn-calc btn-number col-span-2" onclick="appendNumber('0')">0</button>
-            <button class="btn-calc btn-number" onclick="appendNumber('.')">.</button>
-            <button class="btn-calc btn-equals" onclick="calculate()">=</button>
+            <button class="col-span-2 p-4 text-xl font-semibold rounded-lg bg-gray-200 hover:bg-gray-300 active:bg-gray-400 transition" onclick="appendNumber('0')">0</button>
+            <button class="p-4 text-xl font-semibold rounded-lg bg-gray-200 hover:bg-gray-300 active:bg-gray-400 transition" onclick="appendNumber('.')">.</button>
+            <button class="p-4 text-xl font-semibold rounded-lg bg-green-500 hover:bg-green-600 active:bg-green-700 text-white transition" onclick="calculate()">=</button>
         </div>
     </div>
 
@@ -93,7 +76,7 @@
 
         async function calculate() {
             if (expression === '') return;
-            
+
             try {
                 const response = await fetch('/api/calculate', {
                     method: 'POST',
@@ -104,7 +87,7 @@
                 });
 
                 const data = await response.json();
-                
+
                 if (response.ok) {
                     display.value = data.result;
                     expression = data.result.toString();
