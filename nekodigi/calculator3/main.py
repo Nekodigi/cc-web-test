@@ -1,11 +1,11 @@
 import functions_framework
 from flask import Flask, render_template, request, jsonify
 import os
-import openai
+from openai import OpenAI
 
 app = Flask(__name__, template_folder='.', static_folder='.')
 
-openai.api_key = os.environ.get("OPENAI_API_KEY")
+openai_client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 DEVELOPER_ID = os.environ.get("DEVELOPER_ID")
 APP_ID = os.environ.get("APP_ID")
 
@@ -22,7 +22,7 @@ def chat():
         if not message:
             return jsonify({"error": "Message is required"}), 400
 
-        response = openai.ChatCompletion.create(
+        response = openai_client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": "You are a helpful assistant."},
@@ -44,8 +44,7 @@ def health():
 
 @functions_framework.http
 def main(request):
-    with app.app_context():
-        return app(request)
+    return app(request)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=3000, debug=False)
