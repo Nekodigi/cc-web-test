@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>シンプル電卓</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="bg-white rounded-lg shadow-lg p-8 w-80">
+        <h1 class="text-3xl font-bold text-center mb-6 text-gray-800">電卓</h1>
+        
+        <div class="mb-6">
+            <input 
+                type="text" 
+                id="display" 
+                readonly 
+                class="w-full px-4 py-3 text-right text-2xl font-bold border-2 border-gray-300 rounded-lg bg-gray-50"
+                value="0"
+            >
+        </div>
+
+        <div class="grid grid-cols-4 gap-2">
+            <!-- Row 1 -->
+            <button class="btn btn-clear col-span-2">AC</button>
+            <button class="btn btn-operator">/</button>
+            <button class="btn btn-operator">×</button>
+
+            <!-- Row 2 -->
+            <button class="btn">7</button>
+            <button class="btn">8</button>
+            <button class="btn">9</button>
+            <button class="btn btn-operator">−</button>
+
+            <!-- Row 3 -->
+            <button class="btn">4</button>
+            <button class="btn">5</button>
+            <button class="btn">6</button>
+            <button class="btn btn-operator">+</button>
+
+            <!-- Row 4 -->
+            <button class="btn">1</button>
+            <button class="btn">2</button>
+            <button class="btn">3</button>
+            <button class="btn btn-equals" id="equals">=</button>
+
+            <!-- Row 5 -->
+            <button class="btn col-span-2">0</button>
+            <button class="btn">.</button>
+        </div>
+    </div>
+
+    <style>
+        .btn {
+            @apply px-4 py-4 text-lg font-bold rounded-lg transition duration-200;
+            @apply bg-blue-500 text-white hover:bg-blue-600 active:bg-blue-700;
+        }
+
+        .btn-clear {
+            @apply bg-red-500 hover:bg-red-600 active:bg-red-700;
+        }
+
+        .btn-operator {
+            @apply bg-orange-500 hover:bg-orange-600 active:bg-orange-700;
+        }
+
+        .btn-equals {
+            @apply bg-green-500 hover:bg-green-600 active:bg-green-700;
+        }
+    </style>
+
+    <script>
+        const display = document.getElementById('display');
+        let currentInput = '0';
+        let expression = '';
+        let lastOperator = '';
+
+        // 数字ボタンのイベント
+        document.querySelectorAll('.btn:not(.btn-clear):not(.btn-operator):not(.btn-equals)').forEach(button => {
+            button.addEventListener('click', () => {
+                const value = button.textContent;
+                handleInput(value);
+            });
+        });
+
+        // 演算子ボタンのイベント
+        document.querySelectorAll('.btn-operator').forEach(button => {
+            button.addEventListener('click', () => {
+                let operator = button.textContent;
+                operator = operator === '×' ? '*' : operator === '−' ? '-' : operator;
+                handleOperator(operator);
+            });
+        });
+
+        // ACボタン
+        document.querySelector('.btn-clear').addEventListener('click', () => {
+            currentInput = '0';
+            expression = '';
+            lastOperator = '';
+            updateDisplay();
+        });
+
+        // =ボタン
+        document.getElementById('equals').addEventListener('click', () => {
+            handleEquals();
+        });
+
+        function handleInput(value) {
+            if (value === '.') {
+                if (!currentInput.includes('.')) {
+                    currentInput += '.';
+                }
+            } else {
+                if (currentInput === '0') {
+                    currentInput = value;
+                } else {
+                    currentInput += value;
+                }
+            }
+            updateDisplay();
+        }
+
+        function handleOperator(operator) {
+            if (expression === '' && currentInput !== '') {
+                expression = currentInput;
+                lastOperator = operator;
+                currentInput = '0';
+            } else if (currentInput !== '0') {
+                handleEquals();
+                expression = display.textContent;
+                lastOperator = operator;
+                currentInput = '0';
+            }
+            updateDisplay();
+        }
+
+        function handleEquals() {
+            if (expression !== '' && lastOperator !== '' && currentInput !== '0') {
+                const calcExpression = expression + lastOperator + currentInput;
+                calculate(calcExpression);
+                expression = '';
+                lastOperator = '';
+            }
+        }
+
+        function calculate(expr) {
+            fetch('/calculate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ expression: expr })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    currentInput = data.error;
+                } else {
+                    currentInput = String(data.result);
+                }
+                updateDisplay();
+            })
+            .catch(() => {
+                currentInput = 'エラー';
+                updateDisplay();
+            });
+        }
+
+        function updateDisplay() {
+            display.value = currentInput;
+        }
+    </script>
+</body>
+</html>

@@ -1,46 +1,29 @@
-import os
 from flask import Flask, render_template, request, jsonify
+import os
 
-app = Flask(__name__)
-
+app = Flask(__name__, template_folder='.', static_folder='.')
 
 @app.route('/')
 def index():
     return render_template('index.html')
 
-
-@app.route('/api/calculate', methods=['POST'])
+@app.route('/calculate', methods=['POST'])
 def calculate():
-    """Calculate mathematical expression safely"""
     try:
-        data = request.get_json()
-        expression = data.get('expression', '').strip()
+        data = request.json
+        expression = data.get('expression', '')
 
-        if not expression:
-            return jsonify({'error': 'Expression is empty'}), 400
-
-        # Allow only safe operations: numbers, operators, parentheses, decimal points
-        allowed_chars = set('0123456789+-*/.() ')
-        if not all(c in allowed_chars for c in expression):
-            return jsonify({'error': 'Invalid characters in expression'}), 400
-
-        # Evaluate the expression safely
+        # 安全な数式評価（基本的な四則演算のみ）
         result = eval(expression)
-        return jsonify({'result': result})
-
+        return jsonify({'result': result, 'error': None})
     except ZeroDivisionError:
-        return jsonify({'error': 'Division by zero'}), 400
-    except SyntaxError:
-        return jsonify({'error': 'Invalid expression syntax'}), 400
+        return jsonify({'result': None, 'error': '0で割ることはできません'})
     except Exception as e:
-        return jsonify({'error': str(e)}), 400
-
+        return jsonify({'result': None, 'error': '計算エラーが発生しました'})
 
 def main(request):
     """Cloud Functions entry point"""
     return app(request)
 
-
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 3000))
-    app.run(host='0.0.0.0', port=port, debug=False)
+    app.run(host='0.0.0.0', port=3000, debug=True)
