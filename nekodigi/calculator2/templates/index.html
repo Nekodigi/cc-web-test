@@ -6,121 +6,132 @@
     <title>シンプル電卓</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen flex items-center justify-center p-4">
-    <div class="bg-white rounded-lg shadow-2xl p-8 w-full max-w-sm">
-        <h1 class="text-3xl font-bold text-center text-gray-800 mb-8">電卓</h1>
-
-        <div class="bg-gray-100 rounded-lg p-4 mb-6">
-            <input
-                type="text"
-                id="display"
-                class="w-full bg-gray-900 text-white text-right text-4xl p-4 rounded font-mono focus:outline-none"
-                placeholder="0"
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="bg-white rounded-lg shadow-lg p-8 w-80">
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">電卓</h1>
+        
+        <div class="mb-6">
+            <input 
+                type="text" 
+                id="display" 
+                class="w-full bg-gray-200 text-right text-3xl p-4 rounded-lg font-mono border-2 border-gray-300 focus:outline-none focus:border-blue-500"
                 readonly
-            >
-            <div id="result" class="text-right text-gray-600 text-sm mt-2 min-h-6"></div>
+            />
         </div>
 
-        <div class="grid grid-cols-4 gap-2">
-            <!-- Row 1 -->
-            <button onclick="clearDisplay()" class="col-span-2 bg-red-500 hover:bg-red-600 text-white font-bold py-4 rounded-lg transition">C</button>
-            <button onclick="appendOperation('/')" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 rounded-lg transition">÷</button>
-            <button onclick="appendOperation('*')" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 rounded-lg transition">×</button>
+        <div class="grid grid-cols-4 gap-3">
+            <!-- Clear button -->
+            <button class="col-span-2 bg-red-500 hover:bg-red-600 text-white font-bold py-4 rounded-lg text-xl transition" onclick="clearDisplay()">
+                C
+            </button>
+            <button class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 rounded-lg text-xl transition" onclick="addOperator('/')">
+                ÷
+            </button>
+            <button class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 rounded-lg text-xl transition" onclick="addOperator('*')">
+                ×
+            </button>
 
-            <!-- Row 2 -->
-            <button onclick="appendNumber('7')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-4 rounded-lg transition">7</button>
-            <button onclick="appendNumber('8')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-4 rounded-lg transition">8</button>
-            <button onclick="appendNumber('9')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-4 rounded-lg transition">9</button>
-            <button onclick="appendOperation('-')" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 rounded-lg transition">−</button>
+            <!-- Number pad and operators -->
+            <button class="bg-gray-300 hover:bg-gray-400 font-bold py-4 rounded-lg text-xl transition" onclick="addNumber('7')">7</button>
+            <button class="bg-gray-300 hover:bg-gray-400 font-bold py-4 rounded-lg text-xl transition" onclick="addNumber('8')">8</button>
+            <button class="bg-gray-300 hover:bg-gray-400 font-bold py-4 rounded-lg text-xl transition" onclick="addNumber('9')">9</button>
+            <button class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 rounded-lg text-xl transition" onclick="addOperator('-')">−</button>
 
-            <!-- Row 3 -->
-            <button onclick="appendNumber('4')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-4 rounded-lg transition">4</button>
-            <button onclick="appendNumber('5')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-4 rounded-lg transition">5</button>
-            <button onclick="appendNumber('6')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-4 rounded-lg transition">6</button>
-            <button onclick="appendOperation('+')" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 rounded-lg transition">+</button>
+            <button class="bg-gray-300 hover:bg-gray-400 font-bold py-4 rounded-lg text-xl transition" onclick="addNumber('4')">4</button>
+            <button class="bg-gray-300 hover:bg-gray-400 font-bold py-4 rounded-lg text-xl transition" onclick="addNumber('5')">5</button>
+            <button class="bg-gray-300 hover:bg-gray-400 font-bold py-4 rounded-lg text-xl transition" onclick="addNumber('6')">6</button>
+            <button class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 rounded-lg text-xl transition" onclick="addOperator('+')">+</button>
 
-            <!-- Row 4 -->
-            <button onclick="appendNumber('1')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-4 rounded-lg transition">1</button>
-            <button onclick="appendNumber('2')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-4 rounded-lg transition">2</button>
-            <button onclick="appendNumber('3')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-4 rounded-lg transition">3</button>
-            <button onclick="deleteLastChar()" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-4 rounded-lg transition">BS</button>
+            <button class="bg-gray-300 hover:bg-gray-400 font-bold py-4 rounded-lg text-xl transition" onclick="addNumber('1')">1</button>
+            <button class="bg-gray-300 hover:bg-gray-400 font-bold py-4 rounded-lg text-xl transition" onclick="addNumber('2')">2</button>
+            <button class="bg-gray-300 hover:bg-gray-400 font-bold py-4 rounded-lg text-xl transition" onclick="addNumber('3')">3</button>
+            <button class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 rounded-lg text-xl transition row-span-2 flex items-center justify-center" onclick="calculate()">=</button>
 
-            <!-- Row 5 -->
-            <button onclick="appendNumber('0')" class="col-span-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-4 rounded-lg transition">0</button>
-            <button onclick="appendNumber('.')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-4 rounded-lg transition">.</button>
-            <button onclick="calculate()" class="bg-green-500 hover:bg-green-600 text-white font-bold py-4 rounded-lg transition">=</button>
+            <button class="col-span-2 bg-gray-300 hover:bg-gray-400 font-bold py-4 rounded-lg text-xl transition" onclick="addNumber('0')">0</button>
+            <button class="bg-gray-300 hover:bg-gray-400 font-bold py-4 rounded-lg text-xl transition" onclick="addNumber('.')">.</button>
         </div>
+
+        <div id="error" class="mt-4 text-red-500 text-sm text-center hidden"></div>
     </div>
 
     <script>
-        const display = document.getElementById('display');
-        const resultDiv = document.getElementById('result');
+        let expression = '';
 
-        function appendNumber(num) {
-            if (display.value === '0' && num !== '.') {
-                display.value = num;
-            } else if (num === '.' && display.value.includes('.')) {
-                return;
-            } else {
-                display.value += num;
-            }
+        function addNumber(num) {
+            expression += num;
+            updateDisplay();
         }
 
-        function appendOperation(op) {
-            if (display.value === '') return;
-            if (/[+\-*/]$/.test(display.value)) {
-                display.value = display.value.slice(0, -1) + op;
-            } else {
-                display.value += op;
+        function addOperator(op) {
+            if (expression && !expression.endsWith(' ')) {
+                expression += ' ' + op + ' ';
             }
+            updateDisplay();
         }
 
         function clearDisplay() {
-            display.value = '0';
-            resultDiv.textContent = '';
+            expression = '';
+            updateDisplay();
+            hideError();
         }
 
-        function deleteLastChar() {
-            if (display.value.length > 1) {
-                display.value = display.value.slice(0, -1);
-            } else {
-                display.value = '0';
-            }
+        function updateDisplay() {
+            document.getElementById('display').value = expression || '0';
         }
 
         function calculate() {
-            const expression = display.value;
-            if (!expression || /[+\-*/]$/.test(expression)) return;
+            if (!expression.trim()) return;
 
             fetch('/api/calculate', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({ expression: expression })
             })
             .then(response => response.json())
             .then(data => {
                 if (data.error) {
-                    resultDiv.textContent = data.error;
-                    resultDiv.classList.add('text-red-500');
+                    showError(data.error);
                 } else {
-                    display.value = data.result;
-                    resultDiv.textContent = '';
-                    resultDiv.classList.remove('text-red-500');
+                    expression = String(data.result);
+                    hideError();
+                    updateDisplay();
                 }
             })
             .catch(error => {
-                resultDiv.textContent = 'エラーが発生しました';
-                resultDiv.classList.add('text-red-500');
+                showError('計算エラー');
+                console.error('Error:', error);
             });
         }
 
-        // Enterキーで計算実行
-        display.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                calculate();
+        function showError(message) {
+            const errorEl = document.getElementById('error');
+            errorEl.textContent = message;
+            errorEl.classList.remove('hidden');
+        }
+
+        function hideError() {
+            document.getElementById('error').classList.add('hidden');
+        }
+
+        // Initialize display
+        updateDisplay();
+
+        // Keyboard support
+        document.addEventListener('keydown', (e) => {
+            if (e.key >= '0' && e.key <= '9') addNumber(e.key);
+            if (e.key === '.') addNumber('.');
+            if (e.key === '+') addOperator('+');
+            if (e.key === '-') addOperator('-');
+            if (e.key === '*') addOperator('*');
+            if (e.key === '/') { e.preventDefault(); addOperator('/'); }
+            if (e.key === 'Enter') calculate();
+            if (e.key === 'Backspace') {
+                expression = expression.slice(0, -1);
+                updateDisplay();
             }
+            if (e.key === 'Escape') clearDisplay();
         });
     </script>
 </body>
