@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>シンプル電卓</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-2xl p-8 w-full max-w-sm">
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-8">電卓</h1>
+
+        <div class="bg-gray-100 rounded-lg p-4 mb-6">
+            <input
+                type="text"
+                id="display"
+                class="w-full bg-gray-900 text-white text-right text-4xl p-4 rounded font-mono focus:outline-none"
+                placeholder="0"
+                readonly
+            >
+            <div id="result" class="text-right text-gray-600 text-sm mt-2 min-h-6"></div>
+        </div>
+
+        <div class="grid grid-cols-4 gap-2">
+            <!-- Row 1 -->
+            <button onclick="clearDisplay()" class="col-span-2 bg-red-500 hover:bg-red-600 text-white font-bold py-4 rounded-lg transition">C</button>
+            <button onclick="appendOperation('/')" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 rounded-lg transition">÷</button>
+            <button onclick="appendOperation('*')" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 rounded-lg transition">×</button>
+
+            <!-- Row 2 -->
+            <button onclick="appendNumber('7')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-4 rounded-lg transition">7</button>
+            <button onclick="appendNumber('8')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-4 rounded-lg transition">8</button>
+            <button onclick="appendNumber('9')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-4 rounded-lg transition">9</button>
+            <button onclick="appendOperation('-')" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 rounded-lg transition">−</button>
+
+            <!-- Row 3 -->
+            <button onclick="appendNumber('4')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-4 rounded-lg transition">4</button>
+            <button onclick="appendNumber('5')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-4 rounded-lg transition">5</button>
+            <button onclick="appendNumber('6')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-4 rounded-lg transition">6</button>
+            <button onclick="appendOperation('+')" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 rounded-lg transition">+</button>
+
+            <!-- Row 4 -->
+            <button onclick="appendNumber('1')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-4 rounded-lg transition">1</button>
+            <button onclick="appendNumber('2')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-4 rounded-lg transition">2</button>
+            <button onclick="appendNumber('3')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-4 rounded-lg transition">3</button>
+            <button onclick="deleteLastChar()" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-4 rounded-lg transition">BS</button>
+
+            <!-- Row 5 -->
+            <button onclick="appendNumber('0')" class="col-span-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-4 rounded-lg transition">0</button>
+            <button onclick="appendNumber('.')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-4 rounded-lg transition">.</button>
+            <button onclick="calculate()" class="bg-green-500 hover:bg-green-600 text-white font-bold py-4 rounded-lg transition">=</button>
+        </div>
+    </div>
+
+    <script>
+        const display = document.getElementById('display');
+        const resultDiv = document.getElementById('result');
+
+        function appendNumber(num) {
+            if (display.value === '0' && num !== '.') {
+                display.value = num;
+            } else if (num === '.' && display.value.includes('.')) {
+                return;
+            } else {
+                display.value += num;
+            }
+        }
+
+        function appendOperation(op) {
+            if (display.value === '') return;
+            if (/[+\-*/]$/.test(display.value)) {
+                display.value = display.value.slice(0, -1) + op;
+            } else {
+                display.value += op;
+            }
+        }
+
+        function clearDisplay() {
+            display.value = '0';
+            resultDiv.textContent = '';
+        }
+
+        function deleteLastChar() {
+            if (display.value.length > 1) {
+                display.value = display.value.slice(0, -1);
+            } else {
+                display.value = '0';
+            }
+        }
+
+        function calculate() {
+            const expression = display.value;
+            if (!expression || /[+\-*/]$/.test(expression)) return;
+
+            fetch('/calculate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ expression: expression })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    resultDiv.textContent = data.error;
+                    resultDiv.classList.add('text-red-500');
+                } else {
+                    display.value = data.result;
+                    resultDiv.textContent = '';
+                    resultDiv.classList.remove('text-red-500');
+                }
+            })
+            .catch(error => {
+                resultDiv.textContent = 'エラーが発生しました';
+                resultDiv.classList.add('text-red-500');
+            });
+        }
+
+        // Enterキーで計算実行
+        display.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                calculate();
+            }
+        });
+    </script>
+</body>
+</html>
