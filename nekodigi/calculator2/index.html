@@ -3,100 +3,113 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>電卓</title>
+    <title>シンプル電卓</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .btn-calc {
+            @apply w-full p-4 text-lg font-semibold rounded transition;
+        }
+        .btn-number {
+            @apply bg-gray-200 hover:bg-gray-300 active:bg-gray-400;
+        }
+        .btn-operator {
+            @apply bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white;
+        }
+        .btn-equals {
+            @apply bg-green-500 hover:bg-green-600 active:bg-green-700 text-white;
+        }
+        .btn-clear {
+            @apply bg-red-500 hover:bg-red-600 active:bg-red-700 text-white;
+        }
+    </style>
 </head>
-<body class="bg-gray-900 flex items-center justify-center min-h-screen">
-    <div class="bg-gray-800 p-8 rounded-lg shadow-2xl w-80">
-        <h1 class="text-white text-2xl font-bold mb-6 text-center">電卓</h1>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="bg-white rounded-lg shadow-lg p-6 w-80">
+        <h1 class="text-2xl font-bold text-center mb-6 text-gray-800">電卓</h1>
         
-        <div class="bg-gray-700 p-4 rounded mb-4">
-            <input 
-                type="text" 
-                id="display" 
-                class="w-full bg-gray-600 text-white text-right text-3xl font-bold p-4 rounded focus:outline-none"
-                readonly
-                value="0"
-            >
-        </div>
-
-        <div class="grid grid-cols-4 gap-2">
+        <input 
+            type="text" 
+            id="display" 
+            readonly 
+            class="w-full p-4 text-right text-2xl border-2 border-gray-300 rounded mb-6 bg-gray-50 font-mono"
+            value="0"
+        >
+        
+        <div class="grid grid-cols-4 gap-3">
             <!-- 第1行 -->
-            <button onclick="clearDisplay()" class="col-span-3 bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded">AC</button>
-            <button onclick="appendOperator('/')" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 rounded">÷</button>
-
+            <button class="btn-calc btn-clear col-span-3" onclick="clearDisplay()">クリア</button>
+            <button class="btn-calc btn-operator" onclick="appendOperator('/')">÷</button>
+            
             <!-- 第2行 -->
-            <button onclick="appendNumber('7')" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-4 rounded">7</button>
-            <button onclick="appendNumber('8')" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-4 rounded">8</button>
-            <button onclick="appendNumber('9')" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-4 rounded">9</button>
-            <button onclick="appendOperator('*')" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 rounded">×</button>
-
+            <button class="btn-calc btn-number" onclick="appendNumber('7')">7</button>
+            <button class="btn-calc btn-number" onclick="appendNumber('8')">8</button>
+            <button class="btn-calc btn-number" onclick="appendNumber('9')">9</button>
+            <button class="btn-calc btn-operator" onclick="appendOperator('*')">×</button>
+            
             <!-- 第3行 -->
-            <button onclick="appendNumber('4')" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-4 rounded">4</button>
-            <button onclick="appendNumber('5')" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-4 rounded">5</button>
-            <button onclick="appendNumber('6')" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-4 rounded">6</button>
-            <button onclick="appendOperator('-')" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 rounded">−</button>
-
+            <button class="btn-calc btn-number" onclick="appendNumber('4')">4</button>
+            <button class="btn-calc btn-number" onclick="appendNumber('5')">5</button>
+            <button class="btn-calc btn-number" onclick="appendNumber('6')">6</button>
+            <button class="btn-calc btn-operator" onclick="appendOperator('-')">−</button>
+            
             <!-- 第4行 -->
-            <button onclick="appendNumber('1')" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-4 rounded">1</button>
-            <button onclick="appendNumber('2')" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-4 rounded">2</button>
-            <button onclick="appendNumber('3')" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-4 rounded">3</button>
-            <button onclick="appendOperator('+')" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 rounded">+</button>
-
+            <button class="btn-calc btn-number" onclick="appendNumber('1')">1</button>
+            <button class="btn-calc btn-number" onclick="appendNumber('2')">2</button>
+            <button class="btn-calc btn-number" onclick="appendNumber('3')">3</button>
+            <button class="btn-calc btn-operator" onclick="appendOperator('+')">+</button>
+            
             <!-- 第5行 -->
-            <button onclick="appendNumber('0')" class="col-span-2 bg-gray-600 hover:bg-gray-700 text-white font-bold py-4 rounded">0</button>
-            <button onclick="appendNumber('.')" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-4 rounded">.</button>
-            <button onclick="calculate()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded">=</button>
+            <button class="btn-calc btn-number col-span-2" onclick="appendNumber('0')">0</button>
+            <button class="btn-calc btn-number" onclick="appendNumber('.')">.</button>
+            <button class="btn-calc btn-equals" onclick="calculate()">=</button>
         </div>
     </div>
 
     <script>
-        const display = document.getElementById('display');
+        let display = document.getElementById('display');
         let expression = '';
 
-        function updateDisplay() {
-            display.value = expression || '0';
-        }
-
         function appendNumber(num) {
-            expression += num;
-            updateDisplay();
+            if (display.value === '0' && num !== '.') {
+                display.value = num;
+            } else if (num === '.' && display.value.includes('.')) {
+                return;
+            } else {
+                display.value += num;
+            }
+            expression = display.value;
         }
 
         function appendOperator(op) {
-            if (expression && !isOperator(expression.slice(-1))) {
-                expression += op;
-                updateDisplay();
-            }
-        }
-
-        function isOperator(char) {
-            return ['+', '-', '*', '/', '.'].includes(char);
+            if (display.value === '') return;
+            display.value += op;
+            expression = display.value;
         }
 
         function clearDisplay() {
+            display.value = '0';
             expression = '';
-            updateDisplay();
         }
 
         async function calculate() {
-            if (!expression) return;
-
+            if (expression === '') return;
+            
             try {
-                const response = await fetch('/calculate', {
+                const response = await fetch('/api/calculate', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ expression })
+                    body: JSON.stringify({ expression: expression })
                 });
 
                 const data = await response.json();
+                
                 if (response.ok) {
-                    expression = String(data.result);
-                    updateDisplay();
+                    display.value = data.result;
+                    expression = data.result.toString();
                 } else {
-                    display.value = data.error;
+                    display.value = 'エラー';
                     expression = '';
                 }
             } catch (error) {
@@ -104,15 +117,6 @@
                 expression = '';
             }
         }
-
-        // Enterキーで計算実行
-        document.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                calculate();
-            }
-        });
-
-        updateDisplay();
     </script>
 </body>
 </html>

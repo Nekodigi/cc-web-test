@@ -1,33 +1,44 @@
-import os
-from flask import Flask, render_template, request, jsonify
-from flask_cors import CORS
+import functions_framework
+from flask import Flask
+import json
 
-app = Flask(__name__, template_folder='.', static_folder='.')
-CORS(app)
+@functions_framework.http
+def main(request):
+    """HTTP Cloud Function for calculator app"""
 
-@app.route('/')
-def index():
-    return render_template('index.html')
+    # CORS対応
+    if request.method == 'OPTIONS':
+        headers = {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type',
+        }
+        return '', 204, headers
 
-@app.route('/calculate', methods=['POST'])
-def calculate():
-    try:
-        data = request.json
-        expression = data.get('expression', '')
+    headers = {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json',
+    }
 
-        # セキュリティ: 数字、演算子、括弧のみを許可
-        allowed_chars = set('0123456789+-*/(). ')
-        if not all(c in allowed_chars for c in expression):
-            return jsonify({'error': '無効な入力'}), 400
+    # ルートへのアクセス
+    if request.path == '/' and request.method == 'GET':
+        with open('index.html', 'r', encoding='utf-8') as f:
+            html_content = f.read()
+        return html_content, 200, {'Content-Type': 'text/html; charset=utf-8', 'Access-Control-Allow-Origin': '*'}
 
-        # eval を使用して計算
-        result = eval(expression)
-        return jsonify({'result': result})
-    except ZeroDivisionError:
-        return jsonify({'error': '0で除算することはできません'}), 400
-    except Exception as e:
-        return jsonify({'error': '計算エラー'}), 400
+    # 計算API
+    if request.path == '/api/calculate' and request.method == 'POST':
+        try:
+            data = request.get_json()
+            expression = data.get('expression', '')
 
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 3000))
-    app.run(host='0.0.0.0', port=port, debug=False)
+            if not expression:
+                return json.dumps({'error': 'No expression provided'}), 400, headers
+
+            # 基本的な数式評価
+            result = eval(expression, {"__builtins__": {}}, {})
+            return json.dumps({'result': result}), 200, headers
+        except Exception as e:
+            return json.dumps({'error': str(e)}), 400, headers
+
+    return json.dumps({'error': 'Not found'}), 404, headers
