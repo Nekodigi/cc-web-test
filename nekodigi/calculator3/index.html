@@ -3,107 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>電卓</title>
+    <title>AI Assistant</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center">
-    <div class="bg-gray-800 p-6 rounded-2xl shadow-2xl w-80">
-        <div class="bg-gray-900 rounded-lg p-4 mb-4">
-            <div class="text-right text-gray-400 text-sm h-6" id="expression"></div>
-            <div class="text-right text-white text-4xl font-light mt-2" id="display">0</div>
-        </div>
+<body class="bg-black min-h-screen flex items-center justify-center">
+    <div class="w-full max-w-2xl mx-auto p-4">
+        <div class="bg-black border-2 border-red-600 rounded-xl shadow-2xl h-screen max-h-[600px] flex flex-col">
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-black to-red-950 border-b-2 border-red-600 px-6 py-4 rounded-t-lg">
+                <h1 class="text-2xl font-bold text-red-600">AI Assistant</h1>
+                <p class="text-gray-400 text-sm">Powered by OpenAI</p>
+            </div>
 
-        <div class="grid grid-cols-4 gap-3">
-            <button onclick="clearAll()" class="bg-red-500 hover:bg-red-600 text-white font-semibold py-4 rounded-lg col-span-2">AC</button>
-            <button onclick="deleteLast()" class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-4 rounded-lg">DEL</button>
-            <button onclick="appendOperator('/')" class="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-4 rounded-lg text-2xl">÷</button>
+            <!-- Chat Area -->
+            <div class="flex-1 overflow-y-auto px-6 py-4 space-y-4" id="chatContainer">
+                <div class="text-center text-gray-500 py-8">
+                    <p class="text-sm">メッセージを入力してください</p>
+                </div>
+            </div>
 
-            <button onclick="appendNumber('7')" class="bg-gray-700 hover:bg-gray-600 text-white font-semibold py-4 rounded-lg text-xl">7</button>
-            <button onclick="appendNumber('8')" class="bg-gray-700 hover:bg-gray-600 text-white font-semibold py-4 rounded-lg text-xl">8</button>
-            <button onclick="appendNumber('9')" class="bg-gray-700 hover:bg-gray-600 text-white font-semibold py-4 rounded-lg text-xl">9</button>
-            <button onclick="appendOperator('*')" class="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-4 rounded-lg text-2xl">×</button>
-
-            <button onclick="appendNumber('4')" class="bg-gray-700 hover:bg-gray-600 text-white font-semibold py-4 rounded-lg text-xl">4</button>
-            <button onclick="appendNumber('5')" class="bg-gray-700 hover:bg-gray-600 text-white font-semibold py-4 rounded-lg text-xl">5</button>
-            <button onclick="appendNumber('6')" class="bg-gray-700 hover:bg-gray-600 text-white font-semibold py-4 rounded-lg text-xl">6</button>
-            <button onclick="appendOperator('-')" class="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-4 rounded-lg text-2xl">−</button>
-
-            <button onclick="appendNumber('1')" class="bg-gray-700 hover:bg-gray-600 text-white font-semibold py-4 rounded-lg text-xl">1</button>
-            <button onclick="appendNumber('2')" class="bg-gray-700 hover:bg-gray-600 text-white font-semibold py-4 rounded-lg text-xl">2</button>
-            <button onclick="appendNumber('3')" class="bg-gray-700 hover:bg-gray-600 text-white font-semibold py-4 rounded-lg text-xl">3</button>
-            <button onclick="appendOperator('+')" class="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-4 rounded-lg text-2xl">+</button>
-
-            <button onclick="appendNumber('0')" class="bg-gray-700 hover:bg-gray-600 text-white font-semibold py-4 rounded-lg text-xl col-span-2">0</button>
-            <button onclick="appendNumber('.')" class="bg-gray-700 hover:bg-gray-600 text-white font-semibold py-4 rounded-lg text-xl">.</button>
-            <button onclick="calculate()" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-4 rounded-lg text-2xl">=</button>
+            <!-- Input Area -->
+            <div class="border-t-2 border-red-600 bg-gray-950 px-6 py-4 rounded-b-lg">
+                <div class="flex gap-3">
+                    <input
+                        type="text"
+                        id="messageInput"
+                        placeholder="メッセージを入力..."
+                        class="flex-1 bg-black border-2 border-red-600 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
+                        onkeypress="handleKeyPress(event)"
+                    >
+                    <button
+                        onclick="sendMessage()"
+                        class="bg-red-600 hover:bg-red-700 active:bg-red-800 text-white font-bold py-2 px-6 rounded-lg transition-colors duration-200"
+                    >
+                        送信
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-        let currentInput = '0';
-        let expression = '';
-        let lastWasOperator = false;
+        const chatContainer = document.getElementById('chatContainer');
+        const messageInput = document.getElementById('messageInput');
 
-        function updateDisplay() {
-            document.getElementById('display').textContent = currentInput;
-            document.getElementById('expression').textContent = expression;
+        function addMessage(text, isUser) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `flex ${isUser ? 'justify-end' : 'justify-start'}`;
+
+            const bubble = document.createElement('div');
+            bubble.className = `max-w-xs lg:max-w-md px-4 py-3 rounded-lg ${
+                isUser
+                    ? 'bg-red-600 text-white rounded-br-none'
+                    : 'bg-gray-800 text-gray-100 border border-red-600 rounded-bl-none'
+            }`;
+            bubble.textContent = text;
+
+            messageDiv.appendChild(bubble);
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
         }
 
-        function appendNumber(num) {
-            if (currentInput === '0' && num !== '.') {
-                currentInput = num;
-            } else if (num === '.' && currentInput.includes('.')) {
-                return;
-            } else {
-                currentInput += num;
-            }
-            lastWasOperator = false;
-            updateDisplay();
-        }
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message) return;
 
-        function appendOperator(op) {
-            if (lastWasOperator) {
-                expression = expression.slice(0, -1) + op;
-            } else {
-                expression += currentInput + op;
-                currentInput = '0';
-            }
-            lastWasOperator = true;
-            updateDisplay();
-        }
+            addMessage(message, true);
+            messageInput.value = '';
 
-        function calculate() {
             try {
-                const fullExpression = expression + currentInput;
-                const result = eval(fullExpression);
-                currentInput = String(result);
-                expression = '';
-                lastWasOperator = false;
-                updateDisplay();
-            } catch (e) {
-                currentInput = 'Error';
-                expression = '';
-                updateDisplay();
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message })
+                });
+
+                const data = await response.json();
+                if (data.error) {
+                    addMessage(`エラー: ${data.error}`, false);
+                } else {
+                    addMessage(data.response, false);
+                }
+            } catch (err) {
+                addMessage(`通信エラー: ${err.message}`, false);
             }
         }
 
-        function clearAll() {
-            currentInput = '0';
-            expression = '';
-            lastWasOperator = false;
-            updateDisplay();
-        }
-
-        function deleteLast() {
-            if (currentInput.length > 1) {
-                currentInput = currentInput.slice(0, -1);
-            } else {
-                currentInput = '0';
+        function handleKeyPress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
             }
-            updateDisplay();
         }
-
-        updateDisplay();
     </script>
 </body>
 </html>
