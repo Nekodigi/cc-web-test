@@ -6,104 +6,106 @@
     <title>電卓</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
-    <div class="bg-white rounded-lg shadow-lg p-6 w-80">
-        <h1 class="text-2xl font-bold text-center mb-6">電卓</h1>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm">
+        <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">電卓</h1>
         
-        <div class="bg-gray-800 text-white text-right p-4 rounded mb-4 text-4xl font-mono overflow-hidden">
-            <div id="display">0</div>
+        <div class="mb-6">
+            <input 
+                type="text" 
+                id="display" 
+                class="w-full bg-gray-100 border-2 border-gray-300 rounded-lg p-4 text-right text-3xl font-mono font-bold text-gray-800 focus:outline-none focus:border-indigo-500" 
+                placeholder="0" 
+                readonly
+            />
         </div>
 
-        <div class="grid grid-cols-4 gap-2">
-            <!-- Row 1 -->
-            <button onclick="clearDisplay()" class="col-span-2 bg-red-500 hover:bg-red-600 text-white font-bold py-4 rounded">C</button>
-            <button onclick="appendOperator('/')" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 rounded">÷</button>
-            <button onclick="appendOperator('*')" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 rounded">×</button>
+        <div class="grid grid-cols-4 gap-3 mb-4">
+            <button onclick="appendNumber('7')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-4 px-6 rounded-lg text-xl">7</button>
+            <button onclick="appendNumber('8')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-4 px-6 rounded-lg text-xl">8</button>
+            <button onclick="appendNumber('9')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-4 px-6 rounded-lg text-xl">9</button>
+            <button onclick="appendOperator('/')" class="bg-red-500 hover:bg-red-600 text-white font-bold py-4 px-6 rounded-lg text-xl">÷</button>
 
-            <!-- Row 2 -->
-            <button onclick="appendNumber('7')" class="bg-gray-300 hover:bg-gray-400 text-black font-bold py-4 rounded">7</button>
-            <button onclick="appendNumber('8')" class="bg-gray-300 hover:bg-gray-400 text-black font-bold py-4 rounded">8</button>
-            <button onclick="appendNumber('9')" class="bg-gray-300 hover:bg-gray-400 text-black font-bold py-4 rounded">9</button>
-            <button onclick="appendOperator('-')" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 rounded">−</button>
+            <button onclick="appendNumber('4')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-4 px-6 rounded-lg text-xl">4</button>
+            <button onclick="appendNumber('5')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-4 px-6 rounded-lg text-xl">5</button>
+            <button onclick="appendNumber('6')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-4 px-6 rounded-lg text-xl">6</button>
+            <button onclick="appendOperator('*')" class="bg-red-500 hover:bg-red-600 text-white font-bold py-4 px-6 rounded-lg text-xl">×</button>
 
-            <!-- Row 3 -->
-            <button onclick="appendNumber('4')" class="bg-gray-300 hover:bg-gray-400 text-black font-bold py-4 rounded">4</button>
-            <button onclick="appendNumber('5')" class="bg-gray-300 hover:bg-gray-400 text-black font-bold py-4 rounded">5</button>
-            <button onclick="appendNumber('6')" class="bg-gray-300 hover:bg-gray-400 text-black font-bold py-4 rounded">6</button>
-            <button onclick="appendOperator('+')" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 rounded">+</button>
+            <button onclick="appendNumber('1')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-4 px-6 rounded-lg text-xl">1</button>
+            <button onclick="appendNumber('2')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-4 px-6 rounded-lg text-xl">2</button>
+            <button onclick="appendNumber('3')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-4 px-6 rounded-lg text-xl">3</button>
+            <button onclick="appendOperator('-')" class="bg-red-500 hover:bg-red-600 text-white font-bold py-4 px-6 rounded-lg text-xl">−</button>
 
-            <!-- Row 4 -->
-            <button onclick="appendNumber('1')" class="bg-gray-300 hover:bg-gray-400 text-black font-bold py-4 rounded">1</button>
-            <button onclick="appendNumber('2')" class="bg-gray-300 hover:bg-gray-400 text-black font-bold py-4 rounded">2</button>
-            <button onclick="appendNumber('3')" class="bg-gray-300 hover:bg-gray-400 text-black font-bold py-4 rounded">3</button>
-            <button onclick="calculate()" class="bg-green-500 hover:bg-green-600 text-white font-bold py-4 rounded row-span-2">=</button>
+            <button onclick="appendNumber('0')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-4 px-6 rounded-lg text-xl col-span-2">0</button>
+            <button onclick="appendNumber('.')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-4 px-6 rounded-lg text-xl">.</button>
+            <button onclick="appendOperator('+')" class="bg-red-500 hover:bg-red-600 text-white font-bold py-4 px-6 rounded-lg text-xl">+</button>
+        </div>
 
-            <!-- Row 5 -->
-            <button onclick="appendNumber('0')" class="col-span-2 bg-gray-300 hover:bg-gray-400 text-black font-bold py-4 rounded">0</button>
-            <button onclick="appendNumber('.')" class="bg-gray-300 hover:bg-gray-400 text-black font-bold py-4 rounded">.</button>
+        <div class="grid grid-cols-2 gap-3">
+            <button onclick="clearDisplay()" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-4 px-6 rounded-lg text-xl">C</button>
+            <button onclick="calculate()" class="bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-6 rounded-lg text-xl">=</button>
         </div>
     </div>
 
     <script>
-        let display = document.getElementById('display');
-        let currentValue = '0';
-        let previousValue = '';
-        let operator = '';
-        let shouldResetDisplay = false;
+        const display = document.getElementById('display');
+        let expression = '';
 
         function appendNumber(num) {
-            if (shouldResetDisplay) {
-                currentValue = num;
-                shouldResetDisplay = false;
-            } else {
-                if (currentValue === '0' && num !== '.') {
-                    currentValue = num;
-                } else if (num === '.' && currentValue.includes('.')) {
-                    return;
-                } else {
-                    currentValue += num;
-                }
-            }
+            expression += num;
             updateDisplay();
         }
 
         function appendOperator(op) {
-            if (operator && !shouldResetDisplay) {
-                calculate();
-            }
-            previousValue = currentValue;
-            operator = op;
-            shouldResetDisplay = true;
-        }
-
-        function calculate() {
-            if (!operator || !previousValue) return;
-
-            try {
-                const expression = previousValue + operator + currentValue;
-                const result = eval(expression);
-                currentValue = String(result);
-                operator = '';
-                previousValue = '';
-                shouldResetDisplay = true;
-                updateDisplay();
-            } catch (e) {
-                currentValue = 'エラー';
+            if (expression && !expression.endsWith(' ')) {
+                expression += ' ' + op + ' ';
                 updateDisplay();
             }
-        }
-
-        function clearDisplay() {
-            currentValue = '0';
-            previousValue = '';
-            operator = '';
-            shouldResetDisplay = false;
-            updateDisplay();
         }
 
         function updateDisplay() {
-            display.textContent = currentValue;
+            display.value = expression || '0';
         }
+
+        function clearDisplay() {
+            expression = '';
+            updateDisplay();
+        }
+
+        function calculate() {
+            if (!expression.trim()) return;
+
+            fetch('/api/calculate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ expression: expression })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    display.value = 'エラー: ' + data.error;
+                } else {
+                    expression = String(data.result);
+                    updateDisplay();
+                }
+            })
+            .catch(err => {
+                display.value = 'エラー: ' + err.message;
+            });
+        }
+
+        // キーボード対応
+        document.addEventListener('keydown', (e) => {
+            if (/[0-9.]/.test(e.key)) appendNumber(e.key);
+            else if (['+', '-', '*', '/'].includes(e.key)) appendOperator(e.key);
+            else if (e.key === 'Enter') calculate();
+            else if (e.key === 'Backspace') {
+                expression = expression.slice(0, -1);
+                updateDisplay();
+            }
+        });
+
+        updateDisplay();
     </script>
 </body>
 </html>
