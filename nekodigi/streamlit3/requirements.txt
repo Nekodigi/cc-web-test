@@ -1,0 +1,3 @@
+streamlit>=1.43
+anthropic>=0.45
+pillow>=11.0
