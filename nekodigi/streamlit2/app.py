@@ -4,10 +4,9 @@ from PIL import Image
 import io
 import json
 from datetime import datetime
-import firebase_admin
-from firebase_admin import db
 from openai import OpenAI
 import base64
+import requests
 
 # ページ設定
 st.set_page_config(
@@ -22,18 +21,18 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 DEVELOPER_ID = os.getenv("DEVELOPER_ID")
 APP_ID = os.getenv("APP_ID")
 
-# Firebase初期化
-@st.cache_resource
-def initialize_firebase():
-    try:
-        if not firebase_admin._apps:
-            firebase_admin.initialize_app(options={
-                "databaseURL": "https://sandbox-35d1d-default-rtdb.firebaseio.com"
-            })
-    except Exception as e:
-        st.warning(f"Firebase初期化: {e}")
+# Firebase設定（Web SDK用）
+FIREBASE_CONFIG = {
+    "apiKey": "AIzaSyChB7eBjMaX_lRpfIgUxQDi39Qh82R4oyQ",
+    "databaseURL": "https://sandbox-35d1d-default-rtdb.firebaseio.com",
+}
 
-initialize_firebase()
+# Firebase Realtime DBへのアクセス用URL生成
+def get_firebase_db_url():
+    base_url = FIREBASE_CONFIG["databaseURL"]
+    if DEVELOPER_ID and APP_ID:
+        return f"{base_url}/pracClass/{DEVELOPER_ID}/apps/{APP_ID}/results.json"
+    return None
 
 # OpenAI クライアント初期化
 @st.cache_resource
@@ -45,20 +44,41 @@ def get_openai_client():
 
 client = get_openai_client()
 
-# Firebaseに結果を保存
+# Firebaseに結果を保存（REST API経由）
 def save_to_firebase(image_name: str, analysis_result: dict):
     try:
         if not DEVELOPER_ID or not APP_ID:
             st.warning("DEVELOPER_ID または APP_ID が設定されていません")
             return False
 
-        ref_path = f"pracClass/{DEVELOPER_ID}/apps/{APP_ID}/results/{datetime.now().isoformat()}"
-        db.reference(ref_path).set({
+        db_url = get_firebase_db_url()
+        if not db_url:
+            return False
+
+        # タイムスタンプをキーとして使用
+        timestamp = datetime.now().isoformat()
+        safe_timestamp = timestamp.replace(":", "-").replace(".", "_")
+
+        # REST APIでデータを送信
+        payload = {
             "image_name": image_name,
-            "analysis": analysis_result,
-            "timestamp": datetime.now().isoformat()
-        })
-        return True
+            "prompt": analysis_result.get("prompt", ""),
+            "analysis": analysis_result.get("analysis", ""),
+            "model": analysis_result.get("model", ""),
+            "timestamp": timestamp
+        }
+
+        # Firebaseのauthクエリパラメータ（Web SDKのAPIキーを使用）
+        url = f"{db_url}?auth={FIREBASE_CONFIG['apiKey']}"
+        url = db_url.replace(".json", f"/{safe_timestamp}.json")
+
+        response = requests.put(
+            url,
+            json=payload,
+            timeout=10
+        )
+
+        return response.status_code in [200, 201]
     except Exception as e:
         st.warning(f"Firebase保存エラー: {e}")
         return False

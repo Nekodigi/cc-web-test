@@ -1,6 +1,7 @@
-streamlit>=1.41
-pillow>=11
-numpy>=2
-opencv-python-headless>=4.10
-openai>=1.60
-firebase-admin>=6
+streamlit
+pillow
+numpy
+opencv-python-headless
+openai
+firebase-admin
+requests

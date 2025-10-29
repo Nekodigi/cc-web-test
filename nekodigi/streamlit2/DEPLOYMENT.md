@@ -81,8 +81,8 @@ gcloud run deploy image-recognition-app \
 ```
 
 ### ポート設定
-- Streamlit は 8501 ポートで起動します
-- Cloud Run は自動的にこのポートをマッピングします
+- Streamlit は **8080** ポートで起動します（Cloud Run標準）
+- Cloud Run は自動的にこのポートをリッスンします
 - ヘルスチェックも自動で設定されます
 
 ## ローカル Docker での実行確認
@@ -91,14 +91,14 @@ gcloud run deploy image-recognition-app \
 docker build -t image-recognition-app .
 
 # 環境変数を設定して実行
-docker run -p 8501:8501 \
+docker run -p 8080:8080 \
   -e OPENAI_API_KEY=$OPENAI_API_KEY \
   -e DEVELOPER_ID=$DEVELOPER_ID \
   -e APP_ID=$APP_ID \
   image-recognition-app
 ```
 
-ブラウザで `http://localhost:8501` にアクセス。
+ブラウザで `http://localhost:8080` にアクセス。
 
 ## 注意点
 
