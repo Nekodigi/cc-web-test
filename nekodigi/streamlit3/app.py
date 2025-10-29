@@ -1,55 +1,55 @@
 import streamlit as st
-import anthropic
-import base64
-from io import BytesIO
-from PIL import Image
 import os
+from PIL import Image
+import io
+import base64
+import requests
 
-st.set_page_config(layout="wide", page_title="Image Recognizer")
-st.title("🖼️ Image Recognizer")
+st.set_page_config(layout="centered", page_title="Image Recognition")
 
-uploaded_file = st.file_uploader("画像をアップロード", type=["jpg", "jpeg", "png", "gif", "webp"])
+api_key = os.getenv("OPENAI_API_KEY")
+
+if not api_key:
+    st.error("OPENAI_API_KEY not set")
+    st.stop()
+
+st.title("画像認識")
+
+uploaded_file = st.file_uploader("画像をアップロード", type=["jpg", "jpeg", "png", "webp"])
 
 if uploaded_file:
     image = Image.open(uploaded_file)
-    col1, col2 = st.columns(2)
+    st.image(image, use_column_width=True)
 
-    with col1:
-        st.image(image, caption="アップロード画像", use_column_width=True)
-
-    if st.button("認識開始"):
-        with st.spinner("分析中..."):
-            buffer = BytesIO()
+    if st.button("認識"):
+        with st.spinner("処理中..."):
+            buffer = io.BytesIO()
             image.save(buffer, format="PNG")
-            buffer.seek(0)
-            image_data = base64.standard_b64encode(buffer.read()).decode("utf-8")
+            img_base64 = base64.b64encode(buffer.getvalue()).decode()
 
-            client = anthropic.Anthropic(api_key=os.getenv("OPENAI_API_KEY"))
+            headers = {
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json"
+            }
 
-            message = client.messages.create(
-                model="claude-3-5-sonnet-20241022",
-                max_tokens=1024,
-                messages=[
+            payload = {
+                "model": "gpt-4o-mini",
+                "messages": [
                     {
                         "role": "user",
                         "content": [
-                            {
-                                "type": "image",
-                                "source": {
-                                    "type": "base64",
-                                    "media_type": "image/png",
-                                    "data": image_data,
-                                },
-                            },
-                            {
-                                "type": "text",
-                                "text": "この画像に何が写っているか、日本語で簡潔に説明してください。"
-                            }
-                        ],
+                            {"type": "text", "text": "この画像に何が写っていますか？日本語で簡潔に説明してください。"},
+                            {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{img_base64}"}}
+                        ]
                     }
-                ],
-            )
+                ]
+            }
 
-            with col2:
-                st.subheader("認識結果")
-                st.write(message.content[0].text)
+            try:
+                response = requests.post("https://api.openai.com/v1/chat/completions", json=payload, headers=headers, timeout=30)
+                response.raise_for_status()
+                result = response.json()
+                description = result["choices"][0]["message"]["content"]
+                st.success(description)
+            except Exception as e:
+                st.error(f"エラー: {str(e)}")

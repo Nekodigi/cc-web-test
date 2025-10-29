@@ -5,9 +5,8 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY .streamlit .streamlit
 COPY app.py .
 
 EXPOSE 3000
 
-CMD ["streamlit", "run", "app.py"]
+CMD ["streamlit", "run", "app.py", "--server.port=3000", "--server.address=0.0.0.0"]
