@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>関数電卓</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+        .calc-button {
+            transition: all 0.15s ease;
+        }
+        .calc-button:active {
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-md">
+        <!-- タイトル -->
+        <div class="text-center mb-6 fade-in">
+            <h1 class="text-4xl font-bold text-white mb-2">関数電卓</h1>
+            <p class="text-purple-300 text-sm">Scientific Calculator</p>
+        </div>
+
+        <!-- 電卓本体 -->
+        <div class="bg-gray-800 rounded-3xl shadow-2xl p-6 fade-in">
+            <!-- ディスプレイ -->
+            <div class="mb-6">
+                <div class="bg-gray-900 rounded-xl p-4 mb-2 min-h-[80px] flex flex-col justify-end">
+                    <div id="history" class="text-purple-400 text-sm mb-1 overflow-x-auto whitespace-nowrap"></div>
+                    <input
+                        type="text"
+                        id="display"
+                        class="bg-transparent text-white text-3xl font-mono text-right outline-none w-full"
+                        value="0"
+                        readonly
+                    >
+                </div>
+                <div id="error" class="text-red-400 text-xs min-h-[16px] px-2"></div>
+            </div>
+
+            <!-- 関数ボタン -->
+            <div class="grid grid-cols-5 gap-2 mb-3">
+                <button onclick="appendToDisplay('sin(')" class="calc-button bg-purple-600 hover:bg-purple-700 text-white rounded-lg py-2 text-sm font-semibold">sin</button>
+                <button onclick="appendToDisplay('cos(')" class="calc-button bg-purple-600 hover:bg-purple-700 text-white rounded-lg py-2 text-sm font-semibold">cos</button>
+                <button onclick="appendToDisplay('tan(')" class="calc-button bg-purple-600 hover:bg-purple-700 text-white rounded-lg py-2 text-sm font-semibold">tan</button>
+                <button onclick="appendToDisplay('ln(')" class="calc-button bg-purple-600 hover:bg-purple-700 text-white rounded-lg py-2 text-sm font-semibold">ln</button>
+                <button onclick="appendToDisplay('log(')" class="calc-button bg-purple-600 hover:bg-purple-700 text-white rounded-lg py-2 text-sm font-semibold">log</button>
+            </div>
+
+            <div class="grid grid-cols-5 gap-2 mb-3">
+                <button onclick="appendToDisplay('sqrt(')" class="calc-button bg-purple-600 hover:bg-purple-700 text-white rounded-lg py-2 text-sm font-semibold">√</button>
+                <button onclick="appendToDisplay('pow(')" class="calc-button bg-purple-600 hover:bg-purple-700 text-white rounded-lg py-2 text-sm font-semibold">x^y</button>
+                <button onclick="appendToDisplay('^2')" class="calc-button bg-purple-600 hover:bg-purple-700 text-white rounded-lg py-2 text-sm font-semibold">x²</button>
+                <button onclick="appendToDisplay('pi')" class="calc-button bg-purple-600 hover:bg-purple-700 text-white rounded-lg py-2 text-sm font-semibold">π</button>
+                <button onclick="appendToDisplay('e')" class="calc-button bg-purple-600 hover:bg-purple-700 text-white rounded-lg py-2 text-sm font-semibold">e</button>
+            </div>
+
+            <!-- 数字と演算子ボタン -->
+            <div class="grid grid-cols-4 gap-2">
+                <button onclick="clearDisplay()" class="calc-button bg-red-600 hover:bg-red-700 text-white rounded-lg py-4 text-xl font-bold col-span-2">AC</button>
+                <button onclick="backspace()" class="calc-button bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg py-4 text-xl font-bold">⌫</button>
+                <button onclick="appendToDisplay('/')" class="calc-button bg-orange-600 hover:bg-orange-700 text-white rounded-lg py-4 text-xl font-bold">÷</button>
+
+                <button onclick="appendToDisplay('7')" class="calc-button bg-gray-700 hover:bg-gray-600 text-white rounded-lg py-4 text-xl font-bold">7</button>
+                <button onclick="appendToDisplay('8')" class="calc-button bg-gray-700 hover:bg-gray-600 text-white rounded-lg py-4 text-xl font-bold">8</button>
+                <button onclick="appendToDisplay('9')" class="calc-button bg-gray-700 hover:bg-gray-600 text-white rounded-lg py-4 text-xl font-bold">9</button>
+                <button onclick="appendToDisplay('*')" class="calc-button bg-orange-600 hover:bg-orange-700 text-white rounded-lg py-4 text-xl font-bold">×</button>
+
+                <button onclick="appendToDisplay('4')" class="calc-button bg-gray-700 hover:bg-gray-600 text-white rounded-lg py-4 text-xl font-bold">4</button>
+                <button onclick="appendToDisplay('5')" class="calc-button bg-gray-700 hover:bg-gray-600 text-white rounded-lg py-4 text-xl font-bold">5</button>
+                <button onclick="appendToDisplay('6')" class="calc-button bg-gray-700 hover:bg-gray-600 text-white rounded-lg py-4 text-xl font-bold">6</button>
+                <button onclick="appendToDisplay('-')" class="calc-button bg-orange-600 hover:bg-orange-700 text-white rounded-lg py-4 text-xl font-bold">−</button>
+
+                <button onclick="appendToDisplay('1')" class="calc-button bg-gray-700 hover:bg-gray-600 text-white rounded-lg py-4 text-xl font-bold">1</button>
+                <button onclick="appendToDisplay('2')" class="calc-button bg-gray-700 hover:bg-gray-600 text-white rounded-lg py-4 text-xl font-bold">2</button>
+                <button onclick="appendToDisplay('3')" class="calc-button bg-gray-700 hover:bg-gray-600 text-white rounded-lg py-4 text-xl font-bold">3</button>
+                <button onclick="appendToDisplay('+')" class="calc-button bg-orange-600 hover:bg-orange-700 text-white rounded-lg py-4 text-xl font-bold">+</button>
+
+                <button onclick="appendToDisplay('0')" class="calc-button bg-gray-700 hover:bg-gray-600 text-white rounded-lg py-4 text-xl font-bold col-span-2">0</button>
+                <button onclick="appendToDisplay('.')" class="calc-button bg-gray-700 hover:bg-gray-600 text-white rounded-lg py-4 text-xl font-bold">.</button>
+                <button onclick="calculate()" class="calc-button bg-green-600 hover:bg-green-700 text-white rounded-lg py-4 text-xl font-bold">=</button>
+
+                <button onclick="appendToDisplay('(')" class="calc-button bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-4 text-xl font-bold">(</button>
+                <button onclick="appendToDisplay(')')" class="calc-button bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-4 text-xl font-bold">)</button>
+                <button onclick="appendToDisplay('^')" class="calc-button bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-4 text-xl font-bold">^</button>
+                <button onclick="appendToDisplay('factorial(')" class="calc-button bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-4 text-sm font-bold">n!</button>
+            </div>
+        </div>
+
+        <!-- フッター -->
+        <div class="text-center mt-4 text-purple-300 text-xs">
+            <p>sin, cos, tan, log, ln, √, π, e, 累乗などに対応</p>
+        </div>
+    </div>
+
+    <script>
+        let currentDisplay = '0';
+        let lastResult = null;
+
+        const displayElement = document.getElementById('display');
+        const historyElement = document.getElementById('history');
+        const errorElement = document.getElementById('error');
+
+        function updateDisplay() {
+            displayElement.value = currentDisplay;
+            errorElement.textContent = '';
+        }
+
+        function appendToDisplay(value) {
+            if (currentDisplay === '0' && value !== '.') {
+                currentDisplay = value;
+            } else {
+                currentDisplay += value;
+            }
+            updateDisplay();
+        }
+
+        function clearDisplay() {
+            currentDisplay = '0';
+            historyElement.textContent = '';
+            updateDisplay();
+        }
+
+        function backspace() {
+            if (currentDisplay.length > 1) {
+                currentDisplay = currentDisplay.slice(0, -1);
+            } else {
+                currentDisplay = '0';
+            }
+            updateDisplay();
+        }
+
+        async function calculate() {
+            try {
+                const expression = currentDisplay;
+
+                const response = await fetch('/calculate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ expression: expression })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    historyElement.textContent = expression + ' =';
+                    currentDisplay = String(data.result);
+                    lastResult = data.result;
+                    updateDisplay();
+                } else {
+                    errorElement.textContent = data.error || 'エラーが発生しました';
+                    setTimeout(() => {
+                        errorElement.textContent = '';
+                    }, 3000);
+                }
+            } catch (error) {
+                errorElement.textContent = '通信エラーが発生しました';
+                setTimeout(() => {
+                    errorElement.textContent = '';
+                }, 3000);
+            }
+        }
+
+        // キーボード入力対応
+        document.addEventListener('keydown', (event) => {
+            const key = event.key;
+
+            if (key >= '0' && key <= '9') {
+                appendToDisplay(key);
+            } else if (['+', '-', '*', '/', '(', ')', '.', '^'].includes(key)) {
+                appendToDisplay(key);
+            } else if (key === 'Enter') {
+                event.preventDefault();
+                calculate();
+            } else if (key === 'Escape') {
+                clearDisplay();
+            } else if (key === 'Backspace') {
+                backspace();
+            }
+        });
+    </script>
+</body>
+</html>
